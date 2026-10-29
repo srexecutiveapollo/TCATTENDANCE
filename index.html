@@ -801,52 +801,42 @@
      submitWithRetry — fires the attendance INSERT at Supabase,
      retries on network errors and "busy"/5xx responses.
      ============================================================ */
-  async function submitWithRetry(payload, attemptsLeft){
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
+ async function submitWithRetry(payload, attemptsLeft){
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-    try {
-      const res = await fetch(SUPABASE_URL + '/rest/v1/attendance', {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      });
+  try {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/submit-attendance', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
 
-      const text = await res.text();
-      let data = null;
-      try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
 
-      if (res.ok) {
-        return { result: 'success', row: Array.isArray(data) ? data[0] : data };
-      }
-
-      const msg = (data && (data.message || data.hint || data.error)) || ('HTTP ' + res.status);
-      const isTransient = res.status >= 500 || /busy|timeout|temporarily/i.test(msg);
-
-      if (isTransient && attemptsLeft > 1) {
-        await new Promise(r => setTimeout(r, 2000));
-        return submitWithRetry(payload, attemptsLeft - 1);
-      }
-      return { result: 'error', message: msg, status: res.status };
-    } catch (networkErr) {
-      if (attemptsLeft > 1) {
-        await new Promise(r => setTimeout(r, 1000));
-        return submitWithRetry(payload, attemptsLeft - 1);
-      }
-      if (networkErr && networkErr.name === 'AbortError') {
-        throw new Error('The server took too long to respond. Please try again.');
-      }
-      throw networkErr;
-    } finally {
-      clearTimeout(timeoutId);
+    if (res.ok) {
+      return { result: 'success', row: data };
     }
+
+    const msg = (data && data.error) || ('HTTP ' + res.status);
+    return { result: 'error', message: msg, status: res.status };
+  } catch (networkErr) {
+    if (attemptsLeft > 1) {
+      await new Promise(r => setTimeout(r, 1000));
+      return submitWithRetry(payload, attemptsLeft - 1);
+    }
+    throw networkErr;
+  } finally {
+    clearTimeout(timeoutId);
   }
+}
 
   /* ============================================================
      Pending-photo queue — persists not-yet-confirmed submissions
