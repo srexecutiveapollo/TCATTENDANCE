@@ -12,12 +12,16 @@
   }
   *{ box-sizing:border-box; }
   html, body{ margin:0; height:100%; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color:var(--ink); background:var(--paper); }
+
   .topbar{
     display:flex; flex-wrap:wrap; gap:10px; align-items:center;
     padding:12px 14px; background:var(--card); border-bottom:1px solid var(--line);
     position:relative; z-index:1000;
   }
-  .topbar h1{ font-size:15px; margin:0 14px 0 0; font-weight:700; white-space:nowrap; }
+  .brand{ display:flex; align-items:center; gap:10px; margin-right:14px; }
+  .brand img{ height:36px; width:auto; border-radius:6px; }
+  .brand h1{ font-size:15px; margin:0; font-weight:700; white-space:nowrap; }
+  
   .topbar label{ font-size:11px; font-weight:600; color:var(--muted); display:block; margin-bottom:3px; }
   .field-group{ display:flex; flex-direction:column; }
   .topbar input, .topbar select{
@@ -70,18 +74,16 @@
     background:var(--card); border:1px solid var(--line); border-radius:8px;
     padding:8px 14px; font-size:12.5px; color:var(--muted); display:none;
   }
-  .err-banner{
-    position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:950;
-    background:#FBEAE7; border:1px solid #E3B4AB; color:var(--danger);
-    border-radius:8px; padding:10px 14px; font-size:12.5px; max-width:520px;
-    display:none; line-height:1.5;
-  }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <h1>📍 Attendance Map</h1>
+  <div class="brand">
+    <!-- Logo is added back here -->
+    <img src="logo.png" alt="Apollo Home Care">
+    <h1>📍 Attendance Map</h1>
+  </div>
 
   <div class="field-group">
     <label for="startDate">From</label>
@@ -134,7 +136,6 @@
 <div class="map-wrap">
   <div id="map"></div>
   <div class="loading-note" id="loadingNote">Loading attendance…</div>
-  <div class="err-banner" id="errBanner"></div>
   <div class="legend">
     <div><span class="dot" style="background:#2F7A5C;"></span> 12 Hrs Day</div>
     <div><span class="dot" style="background:#1F6FB2;"></span> 12 Hrs Night</div>
@@ -145,62 +146,87 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+  // Configuration
   const SUPABASE_URL      = 'https://pdgxpgvwgnptxdvffgos.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_FpqLF9z4wAxV7Jd-7ZLk2A_j0u74m80';
-  const AUTO_REFRESH_MS = 60000;
-
-  const map = L.map('map').setView([20.5937, 78.9629], 5);
-  L.tileLayer('https://tiles.openfreemap.org/styles/positron/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://openfreemap.org">OpenFreeMap</a>',
-    maxZoom: 20
-}).addTo(map);
+  
+  // Initialize Map
+  const map = L.map('map').setView([20.5937, 78.9629], 5); // Center of India
+  
+  // Using OpenStreetMap as it reliably serves raster (.png) tiles for free without a key
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
 
   let markers = [];
 
   function getInitials(name){
     return String(name || '?').trim().split(/\s+/).map(w => w[0] || '').slice(0, 2).join('').toUpperCase();
   }
+
   function shortName(name){
     const n = String(name || '').trim();
     return n.length > 13 ? n.slice(0, 12) + '…' : n;
   }
+
   function colorFor(dutyType){
     if (dutyType === '12 Hrs Night') return '#1F6FB2';
     if (dutyType === '24 Hrs stay duty') return '#D98E1F';
     if (dutyType === 'On Call') return '#8A4FB8';
-    return '#2F7A5C';
+    return '#2F7A5C'; // 12 Hrs Day
   }
+
   function buildMarkerIcon(r){
     const color = colorFor(r.duty_type);
     const avatarInner = r.photo_base64
       ? '<img src="' + escapeHtml(r.photo_base64) + '" class="pin-avatar-img">'
       : '<span class="pin-avatar-initials">' + escapeHtml(getInitials(r.nurse_name)) + '</span>';
+
     const html =
       '<div class="pin-wrap">' +
         '<div class="pin-avatar" style="border-color:' + color + ';">' + avatarInner + '</div>' +
         '<div class="pin-label" style="border-color:' + color + ';">' + escapeHtml(shortName(r.nurse_name)) + '</div>' +
       '</div>';
-    return L.divIcon({ html: html, className: 'custom-pin-icon', iconSize: [64, 56], iconAnchor: [32, 56], popupAnchor: [0, -56] });
+
+    return L.divIcon({
+      html: html,
+      className: 'custom-pin-icon',
+      iconSize: [64, 56],
+      iconAnchor: [32, 56],
+      popupAnchor: [0, -56]
+    });
   }
+
   function clearMarkers(){
     markers.forEach(m => map.removeLayer(m));
     markers = [];
   }
+
   function plotRecords(records){
     clearMarkers();
     const centreSet = new Set();
     const valid = [];
+
     records.forEach(r => {
-      if (typeof r.latitude !== 'number' || typeof r.longitude !== 'number') return;
+      // Check if coordinates exist and are valid numbers
+      if (typeof r.latitude !== 'number' || typeof r.longitude !== 'number') {
+        console.warn('Skipping row missing lat/lng:', r.nurse_name);
+        return;
+      }
       valid.push(r);
       centreSet.add(r.care_centre);
+
       const marker = L.marker([r.latitude, r.longitude], { icon: buildMarkerIcon(r) }).addTo(map);
+
       const badge = r.punctuality === 'Late'
         ? '<span class="popup-badge late">Late</span>'
         : (r.punctuality === 'On Time' ? '<span class="popup-badge ontime">On Time</span>' : '');
+
       const photoHtml = r.photo_base64
         ? '<img src="' + escapeHtml(r.photo_base64) + '" alt="Check-in photo" class="popup-photo">'
         : '';
+
       marker.bindPopup(
         '<b>' + escapeHtml(r.nurse_name) + '</b> (' + escapeHtml(r.employee_id || '') + ')' + badge + '<br>' +
         escapeHtml(r.care_centre) + ' · ' + escapeHtml(r.emp_type || '—') + '<br>' +
@@ -212,23 +238,23 @@
       );
       markers.push(marker);
     });
+
+    // If we have valid coordinates, zoom to fit them all
     if (valid.length > 0) {
       const bounds = L.latLngBounds(valid.map(r => [r.latitude, r.longitude]));
       map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+    } else {
+      // If no valid coordinates, stay at the default view
+      map.setView([20.5937, 78.9629], 5);
     }
+
     document.getElementById('countBadge').textContent =
       valid.length + ' check-in' + (valid.length === 1 ? '' : 's') + ' shown — ' +
       centreSet.size + ' care centre' + (centreSet.size === 1 ? '' : 's');
   }
+
   function escapeHtml(str){
     return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  function showError(msg){
-    const el = document.getElementById('errBanner');
-    el.textContent = msg;
-    el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, 8000);
   }
 
   async function loadData(){
@@ -248,6 +274,7 @@
             + 'latitude,longitude,punctuality,submitted_at,photo_base64'
             + '&order=submitted_at.desc';
 
+    // Only apply date filter if dates are selected
     if (start && end) {
       url += '&duty_date=gte.' + encodeURIComponent(start)
            + '&duty_date=lte.' + encodeURIComponent(end);
@@ -258,17 +285,22 @@
 
     try {
       const res = await fetch(url, {
-        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+        }
       });
+
       if (!res.ok) {
         const txt = await res.text();
-        showError('Could not load attendance: ' + txt.slice(0, 300));
+        alert('Could not load attendance: ' + txt.slice(0, 200));
         return;
       }
+
       const data = await res.json();
       plotRecords(data || []);
     } catch (err) {
-      showError('Could not load attendance: ' + (err.message || 'network error'));
+      alert('Could not load attendance. Check your connection and try again.');
     } finally {
       loadingNote.style.display = 'none';
     }
@@ -276,25 +308,15 @@
 
   document.getElementById('loadBtn').addEventListener('click', loadData);
 
-  // Default to last 30 days so existing rows show up
+  // Default date range to last 30 days
   const dEnd = new Date();
   const dStart = new Date(Date.now() - 30 * 24 * 3600 * 1000);
   const fmt = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   document.getElementById('startDate').value = fmt(dStart);
   document.getElementById('endDate').value = fmt(dEnd);
 
+  // Initial Load
   loadData();
-
-  let autoTimer = null;
-  function scheduleAutoRefresh(){
-    clearTimeout(autoTimer);
-    if (AUTO_REFRESH_MS > 0) autoTimer = setTimeout(() => { loadData(); scheduleAutoRefresh(); }, AUTO_REFRESH_MS);
-  }
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') { loadData(); scheduleAutoRefresh(); }
-    else clearTimeout(autoTimer);
-  });
-  scheduleAutoRefresh();
 </script>
 </body>
 </html>
