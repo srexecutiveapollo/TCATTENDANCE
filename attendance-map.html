@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apollo Home Care — Attendance Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+
+  :root{
+    --ink:#16233B; --paper:#EDF2F1; --card:#FFFFFF;
+    --pulse:#2F7A5C; --pulse-deep:#1F5940; --line:#D7DFDD; --muted:#5C6B72; --danger:#B23A2E;
+  }
+  *{ box-sizing:border-box; }
+  html, body{ margin:0; height:100%; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color:var(--ink); background:var(--paper); }
+
+  .topbar{
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+    padding:12px 14px; background:var(--card); border-bottom:1px solid var(--line);
+    position:relative; z-index:1000;
+  }
+  .topbar h1{ font-size:15px; margin:0 14px 0 0; font-weight:700; white-space:nowrap; }
+  .topbar label{ font-size:11px; font-weight:600; color:var(--muted); display:block; margin-bottom:3px; }
+  .field-group{ display:flex; flex-direction:column; }
+  .topbar input, .topbar select{
+    padding:7px 9px; border:1px solid #C9D3D1; border-radius:7px; font-size:13px;
+    font-family:ui-monospace,'SF Mono','Roboto Mono','Courier New',monospace; background:#FBFCFC; color:var(--ink);
+  }
+  .topbar select{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; min-width:130px; }
+  .topbar button{
+    padding:8px 16px; border:none; border-radius:7px; background:var(--pulse-deep); color:#fff;
+    font-size:13px; font-weight:600; cursor:pointer; align-self:flex-end;
+  }
+  .topbar button:hover{ background:var(--pulse); }
+  .count-badge{
+    font-size:12px; color:var(--muted); align-self:flex-end; padding-bottom:8px; white-space:nowrap;
+  }
+
+  .map-wrap{ position:relative; height:calc(100% - 66px); }
+  #map{ position:absolute; top:0; left:0; right:0; bottom:0; }
+
+  .legend{
+    position:absolute; bottom:20px; left:12px; z-index:900; background:var(--card);
+    border:1px solid var(--line); border-radius:9px; padding:9px 12px; font-size:12px;
+    box-shadow:0 2px 8px rgba(22,35,59,0.12);
+  }
+  .legend div{ display:flex; align-items:center; gap:6px; margin:3px 0; }
+  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+
+  .leaflet-popup-content{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:12.5px; line-height:1.6; }
+  .leaflet-popup-content b{ color:var(--pulse-deep); }
+  .popup-photo{
+    display:block; width:100%; max-width:200px; border-radius:7px; margin-top:8px;
+    border:1px solid var(--line);
+  }
+  .popup-badge{
+    display:inline-block; padding:1px 7px; border-radius:5px; font-size:11px; font-weight:700;
+    margin-left:4px;
+  }
+  .popup-badge.late{ background:#FBEAE7; color:var(--danger); }
+  .popup-badge.ontime{ background:#EAF3EF; color:var(--pulse-deep); }
+
+  .custom-pin-icon{ background:transparent; border:none; }
+  .pin-wrap{ display:flex; flex-direction:column; align-items:center; cursor:pointer; }
+  .pin-avatar{
+    width:40px; height:40px; border-radius:50%; border:3px solid #8A94A6;
+    background:#fff; box-shadow:0 2px 6px rgba(22,35,59,0.28);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  .pin-avatar-img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .pin-avatar-initials{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:13px; font-weight:700; color:var(--ink); }
+  .pin-label{
+    margin-top:2px; background:#fff; border:1.5px solid #8A94A6; border-radius:6px;
+    padding:1px 6px; font-size:10px; font-weight:600; color:var(--ink); white-space:nowrap;
+    box-shadow:0 1px 3px rgba(22,35,59,0.18); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+
+  .loading-note{
+    position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:900;
+    background:var(--card); border:1px solid var(--line); border-radius:8px;
+    padding:8px 14px; font-size:12.5px; color:var(--muted); display:none;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📍 Attendance Map</h1>
+
+  <div class="field-group">
+    <label for="startDate">From</label>
+    <input type="date" id="startDate">
+  </div>
+  <div class="field-group">
+    <label for="endDate">To</label>
+    <input type="date" id="endDate">
+  </div>
+  <div class="field-group">
+    <label for="centreFilter">Care Centre</label>
+    <select id="centreFilter">
+      <option value="">All Centres</option>
+    </select>
+  </div>
+  <div class="field-group">
+    <label for="empTypeFilter">Emp Type</label>
+    <select id="empTypeFilter">
+      <option value="">All Emp Types</option>
+    </select>
+  </div>
+  <div class="field-group">
+    <label for="dutyTypeFilter">Duty Type</label>
+    <select id="dutyTypeFilter">
+      <option value="">All Duty Types</option>
+    </select>
+  </div>
+
+  <button id="loadBtn">Load</button>
+  <div class="count-badge" id="countBadge"></div>
+</div>
+
+<div class="map-wrap">
+  <div id="map"></div>
+  <div class="loading-note" id="loadingNote">Loading attendance…</div>
+  <div class="legend">
+    <div><span class="dot" style="background:#2F7A5C;"></span> 12 Hrs Day</div>
+    <div><span class="dot" style="background:#1F6FB2;"></span> 12 Hrs Night</div>
+    <div><span class="dot" style="background:#D98E1F;"></span> 24 Hrs stay duty</div>
+    <div><span class="dot" style="background:#8A4FB8;"></span> On Call</div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  /* ══════════════════════════════════════════════════════
+     CONFIG — update these two values
+     ══════════════════════════════════════════════════════ */
+  const SUPABASE_URL      = 'https://pdgxpgvwgnptxdvffgos.supabase.co';
+  const SUPABASE_ANON_KEY = 'PASTE_YOUR_PUBLISHABLE_KEY_HERE';
+
+  // Auto-refresh while the tab is visible (ms). 0 disables.
+  const AUTO_REFRESH_MS = 60000;
+
+  // Max rows per fetch. Increase if needed.
+  const MAX_ROWS = 500;
+
+  const map = L.map('map').setView([20.5937, 78.9629], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+
+  let markers = [];
+  let dropdownsPopulated = false;
+
+  function getInitials(name){
+    return String(name || '?').trim().split(/\s+/).map(w => w[0] || '').slice(0, 2).join('').toUpperCase();
+  }
+
+  function shortName(name){
+    const n = String(name || '').trim();
+    return n.length > 13 ? n.slice(0, 12) + '…' : n;
+  }
+
+  function colorFor(dutyType){
+    if (dutyType === '12 Hrs Night') return '#1F6FB2';
+    if (dutyType === '24 Hrs stay duty') return '#D98E1F';
+    if (dutyType === 'On Call') return '#8A4FB8';
+    return '#2F7A5C'; // 12 Hrs Day
+  }
+
+  function buildMarkerIcon(r){
+    const color = colorFor(r.duty_type);
+    const avatarInner = r.photo_base64
+      ? '<img src="' + escapeHtml(r.photo_base64) + '" class="pin-avatar-img">'
+      : '<span class="pin-avatar-initials">' + escapeHtml(getInitials(r.nurse_name)) + '</span>';
+
+    const html =
+      '<div class="pin-wrap">' +
+        '<div class="pin-avatar" style="border-color:' + color + ';">' + avatarInner + '</div>' +
+        '<div class="pin-label" style="border-color:' + color + ';">' + escapeHtml(shortName(r.nurse_name)) + '</div>' +
+      '</div>';
+
+    return L.divIcon({
+      html: html,
+      className: 'custom-pin-icon',
+      iconSize: [64, 56],
+      iconAnchor: [32, 56],
+      popupAnchor: [0, -56]
+    });
+  }
+
+  function clearMarkers(){
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+  }
+
+  function plotRecords(records){
+    clearMarkers();
+    const centreSet = new Set();
+    const valid = [];
+
+    records.forEach(r => {
+      if (typeof r.latitude !== 'number' || typeof r.longitude !== 'number') return;
+      valid.push(r);
+      centreSet.add(r.care_centre);
+
+      const marker = L.marker([r.latitude, r.longitude], { icon: buildMarkerIcon(r) }).addTo(map);
+
+      const badge = r.punctuality === 'Late'
+        ? '<span class="popup-badge late">Late</span>'
+        : (r.punctuality === 'On Time' ? '<span class="popup-badge ontime">On Time</span>' : '');
+
+      const photoHtml = r.photo_base64
+        ? '<img src="' + escapeHtml(r.photo_base64) + '" alt="Check-in photo" class="popup-photo">'
+        : '';
+
+      marker.bindPopup(
+        '<b>' + escapeHtml(r.nurse_name) + '</b> (' + escapeHtml(r.employee_id || '') + ')' + badge + '<br>' +
+        escapeHtml(r.care_centre) + ' · ' + escapeHtml(r.emp_type || '—') + '<br>' +
+        'Shift: ' + escapeHtml(r.duty_type) + '<br>' +
+        'Patient: ' + escapeHtml(r.patient_name || 'N/A') + '<br>' +
+        'Location: ' + escapeHtml(r.location_text || '—') + '<br>' +
+        escapeHtml(r.duty_date) + ' ' + escapeHtml(r.duty_time) +
+        photoHtml
+      );
+      markers.push(marker);
+    });
+
+    if (valid.length > 0) {
+      const bounds = L.latLngBounds(valid.map(r => [r.latitude, r.longitude]));
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+    }
+
+    document.getElementById('countBadge').textContent =
+      valid.length + ' check-in' + (valid.length === 1 ? '' : 's') + ' shown — ' +
+      centreSet.size + ' care centre' + (centreSet.size === 1 ? '' : 's');
+  }
+
+  function escapeHtml(str){
+    return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  /* ══════════════════════════════════════════════════════
+     Populate the three dropdowns from distinct values
+     that actually exist in the attendance table.
+     Runs once, on first page load.
+     ══════════════════════════════════════════════════════ */
+  async function populateDropdowns(){
+    if (dropdownsPopulated) return;
+
+    try {
+      // Fetch distinct values for each column via PostgREST.
+      // PostgREST doesn't support DISTINCT directly, so we fetch a page
+      // and deduplicate client-side. 500 rows is plenty for filter options.
+      const url = SUPABASE_URL + '/rest/v1/attendance'
+                + '?select=care_centre,emp_type,duty_type'
+                + '&limit=' + MAX_ROWS;
+
+      const res = await fetch(url, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+        }
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      const centres   = new Set();
+      const empTypes  = new Set();
+      const dutyTypes = new Set();
+
+      data.forEach(r => {
+        if (r.care_centre) centres.add(r.care_centre);
+        if (r.emp_type)    empTypes.add(r.emp_type);
+        if (r.duty_type)   dutyTypes.add(r.duty_type);
+      });
+
+      addOptions('centreFilter',   centres);
+      addOptions('empTypeFilter',  empTypes);
+      addOptions('dutyTypeFilter', dutyTypes);
+
+      dropdownsPopulated = true;
+    } catch (err) {
+      console.error('Could not populate dropdowns:', err);
+    }
+  }
+
+  function addOptions(selectId, values){
+    const sel = document.getElementById(selectId);
+    Array.from(values).sort().forEach(v => {
+      // Skip if already present (avoids duplicates on auto-refresh)
+      if (Array.from(sel.options).some(o => o.value === v)) return;
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      sel.appendChild(opt);
+    });
+  }
+
+  /* ══════════════════════════════════════════════════════
+     Load attendance with the current filters
+     ══════════════════════════════════════════════════════ */
+  async function loadData(){
+    const start    = document.getElementById('startDate').value;
+    const end      = document.getElementById('endDate').value;
+    const centre   = document.getElementById('centreFilter').value;
+    const empType  = document.getElementById('empTypeFilter').value;
+    const dutyType = document.getElementById('dutyTypeFilter').value;
+
+    if (!start || !end) {
+      alert('Please choose both a start and end date.');
+      return;
+    }
+
+    const loadingNote = document.getElementById('loadingNote');
+    loadingNote.style.display = 'block';
+    loadingNote.textContent = 'Loading attendance…';
+
+    let url = SUPABASE_URL + '/rest/v1/attendance'
+            + '?select=submission_id,nurse_name,employee_id,emp_type,care_centre,'
+            + 'duty_date,duty_time,duty_type,patient_name,location_text,'
+            + 'latitude,longitude,punctuality,submitted_at,photo_base64'
+            + '&duty_date=gte.' + encodeURIComponent(start)
+            + '&duty_date=lte.' + encodeURIComponent(end)
+            + '&order=submitted_at.desc'
+            + '&limit=' + MAX_ROWS;
+
+    if (centre)   url += '&care_centre=eq.' + encodeURIComponent(centre);
+    if (empType)  url += '&emp_type=eq.'    + encodeURIComponent(empType);
+    if (dutyType) url += '&duty_type=eq.'   + encodeURIComponent(dutyType);
+
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+        }
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        alert('Could not load attendance: ' + txt.slice(0, 200));
+        return;
+      }
+
+      const data = await res.json();
+      plotRecords(data || []);
+    } catch (err) {
+      alert('Could not load attendance. Check your connection and try again.');
+    } finally {
+      loadingNote.style.display = 'none';
+    }
+  }
+
+  document.getElementById('loadBtn').addEventListener('click', loadData);
+
+  // Local date — toISOString() is UTC and shows yesterday before 5:30 AM IST
+  const d0 = new Date();
+  const today = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
+  document.getElementById('startDate').value = today;
+  document.getElementById('endDate').value = today;
+
+  // Populate dropdowns first, then load today's data
+  populateDropdowns().then(loadData);
+
+  // Auto-refresh while tab is visible
+  let autoTimer = null;
+  function scheduleAutoRefresh(){
+    clearTimeout(autoTimer);
+    if (AUTO_REFRESH_MS > 0) {
+      autoTimer = setTimeout(() => { loadData(); scheduleAutoRefresh(); }, AUTO_REFRESH_MS);
+    }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') { loadData(); scheduleAutoRefresh(); }
+    else clearTimeout(autoTimer);
+  });
+  scheduleAutoRefresh();
+</script>
+</body>
+</html>
