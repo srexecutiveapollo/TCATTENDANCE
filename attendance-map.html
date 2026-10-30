@@ -6,14 +6,12 @@
 <title>Apollo Home Care — Attendance Map</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-
   :root{
     --ink:#16233B; --paper:#EDF2F1; --card:#FFFFFF;
     --pulse:#2F7A5C; --pulse-deep:#1F5940; --line:#D7DFDD; --muted:#5C6B72; --danger:#B23A2E;
   }
   *{ box-sizing:border-box; }
   html, body{ margin:0; height:100%; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color:var(--ink); background:var(--paper); }
-
   .topbar{
     display:flex; flex-wrap:wrap; gap:10px; align-items:center;
     padding:12px 14px; background:var(--card); border-bottom:1px solid var(--line);
@@ -32,9 +30,7 @@
     font-size:13px; font-weight:600; cursor:pointer; align-self:flex-end;
   }
   .topbar button:hover{ background:var(--pulse); }
-  .count-badge{
-    font-size:12px; color:var(--muted); align-self:flex-end; padding-bottom:8px; white-space:nowrap;
-  }
+  .count-badge{ font-size:12px; color:var(--muted); align-self:flex-end; padding-bottom:8px; white-space:nowrap; }
 
   .map-wrap{ position:relative; height:calc(100% - 66px); }
   #map{ position:absolute; top:0; left:0; right:0; bottom:0; }
@@ -49,14 +45,8 @@
 
   .leaflet-popup-content{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:12.5px; line-height:1.6; }
   .leaflet-popup-content b{ color:var(--pulse-deep); }
-  .popup-photo{
-    display:block; width:100%; max-width:200px; border-radius:7px; margin-top:8px;
-    border:1px solid var(--line);
-  }
-  .popup-badge{
-    display:inline-block; padding:1px 7px; border-radius:5px; font-size:11px; font-weight:700;
-    margin-left:4px;
-  }
+  .popup-photo{ display:block; width:100%; max-width:200px; border-radius:7px; margin-top:8px; border:1px solid var(--line); }
+  .popup-badge{ display:inline-block; padding:1px 7px; border-radius:5px; font-size:11px; font-weight:700; margin-left:4px; }
   .popup-badge.late{ background:#FBEAE7; color:var(--danger); }
   .popup-badge.ontime{ background:#EAF3EF; color:var(--pulse-deep); }
 
@@ -80,6 +70,12 @@
     background:var(--card); border:1px solid var(--line); border-radius:8px;
     padding:8px 14px; font-size:12.5px; color:var(--muted); display:none;
   }
+  .err-banner{
+    position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:950;
+    background:#FBEAE7; border:1px solid #E3B4AB; color:var(--danger);
+    border-radius:8px; padding:10px 14px; font-size:12.5px; max-width:520px;
+    display:none; line-height:1.5;
+  }
 </style>
 </head>
 <body>
@@ -99,18 +95,35 @@
     <label for="centreFilter">Care Centre</label>
     <select id="centreFilter">
       <option value="">All Centres</option>
+      <option value="Mumbai">Mumbai</option>
+      <option value="Bangalore">Bangalore</option>
+      <option value="Chennai">Chennai</option>
+      <option value="Hyderabad">Hyderabad</option>
+      <option value="Madurai">Madurai</option>
+      <option value="Mysore">Mysore</option>
+      <option value="Delhi">Delhi</option>
+      <option value="Indore">Indore</option>
+      <option value="Kolkata">Kolkata</option>
+      <option value="Guwahati">Guwahati</option>
     </select>
   </div>
   <div class="field-group">
     <label for="empTypeFilter">Emp Type</label>
     <select id="empTypeFilter">
       <option value="">All Emp Types</option>
+      <option value="Onroll">Onroll</option>
+      <option value="AEN">AEN</option>
+      <option value="Agency">Agency</option>
     </select>
   </div>
   <div class="field-group">
     <label for="dutyTypeFilter">Duty Type</label>
     <select id="dutyTypeFilter">
       <option value="">All Duty Types</option>
+      <option value="12 Hrs Day">12 Hrs Day</option>
+      <option value="12 Hrs Night">12 Hrs Night</option>
+      <option value="24 Hrs stay duty">24 Hrs stay duty</option>
+      <option value="On Call">On Call</option>
     </select>
   </div>
 
@@ -121,6 +134,7 @@
 <div class="map-wrap">
   <div id="map"></div>
   <div class="loading-note" id="loadingNote">Loading attendance…</div>
+  <div class="err-banner" id="errBanner"></div>
   <div class="legend">
     <div><span class="dot" style="background:#2F7A5C;"></span> 12 Hrs Day</div>
     <div><span class="dot" style="background:#1F6FB2;"></span> 12 Hrs Night</div>
@@ -131,89 +145,63 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  /* ══════════════════════════════════════════════════════
-     CONFIG — update these two values
-     ══════════════════════════════════════════════════════ */
   const SUPABASE_URL      = 'https://pdgxpgvwgnptxdvffgos.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_FpqLF9z4wAxV7Jd-7ZLk2A_j0u74m80';
-
-  // Auto-refresh while the tab is visible (ms). 0 disables.
   const AUTO_REFRESH_MS = 60000;
 
-  // Max rows per fetch. Increase if needed.
-  const MAX_ROWS = 500;
-
   const map = L.map('map').setView([20.5937, 78.9629], 5);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    maxZoom: 19
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    subdomains: 'abcd',
+    maxZoom: 20
   }).addTo(map);
 
   let markers = [];
-  let dropdownsPopulated = false;
 
   function getInitials(name){
     return String(name || '?').trim().split(/\s+/).map(w => w[0] || '').slice(0, 2).join('').toUpperCase();
   }
-
   function shortName(name){
     const n = String(name || '').trim();
     return n.length > 13 ? n.slice(0, 12) + '…' : n;
   }
-
   function colorFor(dutyType){
     if (dutyType === '12 Hrs Night') return '#1F6FB2';
     if (dutyType === '24 Hrs stay duty') return '#D98E1F';
     if (dutyType === 'On Call') return '#8A4FB8';
-    return '#2F7A5C'; // 12 Hrs Day
+    return '#2F7A5C';
   }
-
   function buildMarkerIcon(r){
     const color = colorFor(r.duty_type);
     const avatarInner = r.photo_base64
       ? '<img src="' + escapeHtml(r.photo_base64) + '" class="pin-avatar-img">'
       : '<span class="pin-avatar-initials">' + escapeHtml(getInitials(r.nurse_name)) + '</span>';
-
     const html =
       '<div class="pin-wrap">' +
         '<div class="pin-avatar" style="border-color:' + color + ';">' + avatarInner + '</div>' +
         '<div class="pin-label" style="border-color:' + color + ';">' + escapeHtml(shortName(r.nurse_name)) + '</div>' +
       '</div>';
-
-    return L.divIcon({
-      html: html,
-      className: 'custom-pin-icon',
-      iconSize: [64, 56],
-      iconAnchor: [32, 56],
-      popupAnchor: [0, -56]
-    });
+    return L.divIcon({ html: html, className: 'custom-pin-icon', iconSize: [64, 56], iconAnchor: [32, 56], popupAnchor: [0, -56] });
   }
-
   function clearMarkers(){
     markers.forEach(m => map.removeLayer(m));
     markers = [];
   }
-
   function plotRecords(records){
     clearMarkers();
     const centreSet = new Set();
     const valid = [];
-
     records.forEach(r => {
       if (typeof r.latitude !== 'number' || typeof r.longitude !== 'number') return;
       valid.push(r);
       centreSet.add(r.care_centre);
-
       const marker = L.marker([r.latitude, r.longitude], { icon: buildMarkerIcon(r) }).addTo(map);
-
       const badge = r.punctuality === 'Late'
         ? '<span class="popup-badge late">Late</span>'
         : (r.punctuality === 'On Time' ? '<span class="popup-badge ontime">On Time</span>' : '');
-
       const photoHtml = r.photo_base64
         ? '<img src="' + escapeHtml(r.photo_base64) + '" alt="Check-in photo" class="popup-photo">'
         : '';
-
       marker.bindPopup(
         '<b>' + escapeHtml(r.nurse_name) + '</b> (' + escapeHtml(r.employee_id || '') + ')' + badge + '<br>' +
         escapeHtml(r.care_centre) + ' · ' + escapeHtml(r.emp_type || '—') + '<br>' +
@@ -225,94 +213,31 @@
       );
       markers.push(marker);
     });
-
     if (valid.length > 0) {
       const bounds = L.latLngBounds(valid.map(r => [r.latitude, r.longitude]));
       map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
     }
-
     document.getElementById('countBadge').textContent =
       valid.length + ' check-in' + (valid.length === 1 ? '' : 's') + ' shown — ' +
       centreSet.size + ' care centre' + (centreSet.size === 1 ? '' : 's');
   }
-
   function escapeHtml(str){
     return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  /* ══════════════════════════════════════════════════════
-     Populate the three dropdowns from distinct values
-     that actually exist in the attendance table.
-     Runs once, on first page load.
-     ══════════════════════════════════════════════════════ */
-  async function populateDropdowns(){
-    if (dropdownsPopulated) return;
-
-    try {
-      // Fetch distinct values for each column via PostgREST.
-      // PostgREST doesn't support DISTINCT directly, so we fetch a page
-      // and deduplicate client-side. 500 rows is plenty for filter options.
-      const url = SUPABASE_URL + '/rest/v1/attendance'
-                + '?select=care_centre,emp_type,duty_type'
-                + '&limit=' + MAX_ROWS;
-
-      const res = await fetch(url, {
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
-        }
-      });
-
-      if (!res.ok) return;
-
-      const data = await res.json();
-
-      const centres   = new Set();
-      const empTypes  = new Set();
-      const dutyTypes = new Set();
-
-      data.forEach(r => {
-        if (r.care_centre) centres.add(r.care_centre);
-        if (r.emp_type)    empTypes.add(r.emp_type);
-        if (r.duty_type)   dutyTypes.add(r.duty_type);
-      });
-
-      addOptions('centreFilter',   centres);
-      addOptions('empTypeFilter',  empTypes);
-      addOptions('dutyTypeFilter', dutyTypes);
-
-      dropdownsPopulated = true;
-    } catch (err) {
-      console.error('Could not populate dropdowns:', err);
-    }
+  function showError(msg){
+    const el = document.getElementById('errBanner');
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 8000);
   }
 
-  function addOptions(selectId, values){
-    const sel = document.getElementById(selectId);
-    Array.from(values).sort().forEach(v => {
-      // Skip if already present (avoids duplicates on auto-refresh)
-      if (Array.from(sel.options).some(o => o.value === v)) return;
-      const opt = document.createElement('option');
-      opt.value = v;
-      opt.textContent = v;
-      sel.appendChild(opt);
-    });
-  }
-
-  /* ══════════════════════════════════════════════════════
-     Load attendance with the current filters
-     ══════════════════════════════════════════════════════ */
   async function loadData(){
     const start    = document.getElementById('startDate').value;
     const end      = document.getElementById('endDate').value;
     const centre   = document.getElementById('centreFilter').value;
     const empType  = document.getElementById('empTypeFilter').value;
     const dutyType = document.getElementById('dutyTypeFilter').value;
-
-    if (!start || !end) {
-      alert('Please choose both a start and end date.');
-      return;
-    }
 
     const loadingNote = document.getElementById('loadingNote');
     loadingNote.style.display = 'block';
@@ -322,33 +247,29 @@
             + '?select=submission_id,nurse_name,employee_id,emp_type,care_centre,'
             + 'duty_date,duty_time,duty_type,patient_name,location_text,'
             + 'latitude,longitude,punctuality,submitted_at,photo_base64'
-            + '&duty_date=gte.' + encodeURIComponent(start)
-            + '&duty_date=lte.' + encodeURIComponent(end)
-            + '&order=submitted_at.desc'
-            + '&limit=' + MAX_ROWS;
+            + '&order=submitted_at.desc';
 
+    if (start && end) {
+      url += '&duty_date=gte.' + encodeURIComponent(start)
+           + '&duty_date=lte.' + encodeURIComponent(end);
+    }
     if (centre)   url += '&care_centre=eq.' + encodeURIComponent(centre);
     if (empType)  url += '&emp_type=eq.'    + encodeURIComponent(empType);
     if (dutyType) url += '&duty_type=eq.'   + encodeURIComponent(dutyType);
 
     try {
       const res = await fetch(url, {
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
-        }
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY }
       });
-
       if (!res.ok) {
         const txt = await res.text();
-        alert('Could not load attendance: ' + txt.slice(0, 200));
+        showError('Could not load attendance: ' + txt.slice(0, 300));
         return;
       }
-
       const data = await res.json();
       plotRecords(data || []);
     } catch (err) {
-      alert('Could not load attendance. Check your connection and try again.');
+      showError('Could not load attendance: ' + (err.message || 'network error'));
     } finally {
       loadingNote.style.display = 'none';
     }
@@ -356,22 +277,19 @@
 
   document.getElementById('loadBtn').addEventListener('click', loadData);
 
-  // Local date — toISOString() is UTC and shows yesterday before 5:30 AM IST
-  const d0 = new Date();
-  const today = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
-  document.getElementById('startDate').value = today;
-  document.getElementById('endDate').value = today;
+  // Default to last 30 days so existing rows show up
+  const dEnd = new Date();
+  const dStart = new Date(Date.now() - 30 * 24 * 3600 * 1000);
+  const fmt = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  document.getElementById('startDate').value = fmt(dStart);
+  document.getElementById('endDate').value = fmt(dEnd);
 
-  // Populate dropdowns first, then load today's data
-  populateDropdowns().then(loadData);
+  loadData();
 
-  // Auto-refresh while tab is visible
   let autoTimer = null;
   function scheduleAutoRefresh(){
     clearTimeout(autoTimer);
-    if (AUTO_REFRESH_MS > 0) {
-      autoTimer = setTimeout(() => { loadData(); scheduleAutoRefresh(); }, AUTO_REFRESH_MS);
-    }
+    if (AUTO_REFRESH_MS > 0) autoTimer = setTimeout(() => { loadData(); scheduleAutoRefresh(); }, AUTO_REFRESH_MS);
   }
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') { loadData(); scheduleAutoRefresh(); }
