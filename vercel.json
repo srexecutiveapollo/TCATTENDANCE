@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/map",
+      "destination": "/attendance-map.html"
+    }
+  ]
+}
