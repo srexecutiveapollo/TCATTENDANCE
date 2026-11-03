@@ -476,7 +476,7 @@
 
   <div class="card">
 
-    <!-- ══════════ PROFILE GATE ══════════ -->
+    <!-- PROFILE GATE -->
     <div id="profileGateArea" class="hidden">
       <fieldset>
         <legend>Your Details<svg class="pulseline" viewBox="0 0 200 20" preserveAspectRatio="none"><polyline points="0,10 60,10 72,2 84,18 96,10 200,10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></legend>
@@ -529,7 +529,7 @@
       <div class="photo-note" style="text-align:center; margin-top:10px;">Entered once — you won't need to re-type this again on this phone. If any of this is ever wrong, it can only be corrected from our records, not by re-entering it here.</div>
     </div>
 
-    <!-- ══════════ PROFILE CONFIRM ══════════ -->
+    <!-- PROFILE CONFIRM -->
     <div id="profileConfirmArea" class="hidden">
       <div class="profile-confirm">
         <p>This Employee ID is already registered to someone else:</p>
@@ -540,7 +540,7 @@
       </div>
     </div>
 
-    <!-- ══════════ LOCATION GATE ══════════ -->
+    <!-- LOCATION GATE -->
     <div id="locationGateArea" class="hidden">
       <div class="locgate">
         <div class="pin">
@@ -553,7 +553,7 @@
       </div>
     </div>
 
-    <!-- ══════════ CAMERA GATE ══════════ -->
+    <!-- CAMERA GATE -->
     <div id="cameraGateArea" class="hidden">
       <div class="locgate">
         <div class="pin">
@@ -566,7 +566,7 @@
       </div>
     </div>
 
-    <!-- ══════════ DENIED: LOCATION ══════════ -->
+    <!-- DENIED: LOCATION -->
     <div id="deniedHelp" class="hidden">
       <div class="denied-box">
         <span class="denied-title">&#9940; ATTENDANCE NOT RECORDED<br>Location is switched OFF for this app</span>
@@ -591,7 +591,7 @@
       </div>
     </div>
 
-    <!-- ══════════ DENIED: CAMERA ══════════ -->
+    <!-- DENIED: CAMERA -->
     <div id="cameraDeniedHelp" class="hidden">
       <div class="denied-box">
         <span class="denied-title">&#9940; ATTENDANCE NOT RECORDED<br>Camera is switched OFF for this app</span>
@@ -614,13 +614,13 @@
       </div>
     </div>
 
-    <!-- ══════════ PROFILE BAR (shown with forms) ══════════ -->
+    <!-- PROFILE BAR -->
     <div id="profileBar" class="hidden">
       &#9989; <b id="profileBarText"></b>
       <a href="#" id="changeProfileLink">Not you?</a>
     </div>
 
-    <!-- ══════════ STATUS CHECK ══════════ -->
+    <!-- STATUS CHECK -->
     <div id="statusCheckArea" class="hidden">
       <div class="status-check">
         <div class="spinner"></div>
@@ -630,7 +630,7 @@
       </div>
     </div>
 
-    <!-- ══════════ SIGN IN FORM ══════════ -->
+    <!-- SIGN IN FORM -->
     <div id="signInFormArea" class="hidden">
       <form id="signInForm" novalidate>
 
@@ -724,7 +724,7 @@
       </form>
     </div>
 
-    <!-- ══════════ SIGN OUT FORM ══════════ -->
+    <!-- SIGN OUT FORM -->
     <div id="signOutFormArea" class="hidden">
       <form id="signOutForm" novalidate>
 
@@ -768,7 +768,7 @@
       </form>
     </div>
 
-    <!-- ══════════ SUCCESS ══════════ -->
+    <!-- SUCCESS -->
     <div id="successArea" class="hidden">
       <div class="success">
         <div class="check">
@@ -785,7 +785,7 @@
   </div>
 </div>
 
-<!-- ══════════ CAMERA OVERLAY ══════════ -->
+<!-- CAMERA OVERLAY -->
 <div class="cam-overlay" id="camOverlay">
   <video id="camVideo" autoplay playsinline muted></video>
   <div class="cam-controls">
@@ -804,16 +804,11 @@
   const FN_URL            = SUPABASE_URL + '/functions/v1/submit-attendance';
 
   /* ============================================================
-     SIGN-IN WINDOW
-     ------------------------------------------------------------
-     Nurses may only SIGN IN between these two times (device local
-     time). Sign-OUT is never restricted. Set to '00:00' / '23:59'
-     to allow sign-in at any time of day.
+     SIGN-IN WINDOW  (device local time)
+     Set to '00:00' / '23:59' to allow sign-in any time of day.
      ============================================================ */
   const SIGN_IN_OPEN_HHMM  = '00:00';
   const SIGN_IN_CLOSE_HHMM = '23:59';
-
-  const DAY_LABEL = 'today';
 
   /* ============================================================
      Helpers
@@ -827,11 +822,12 @@
   function isSignInWindowOpen(now){
     const open = hhmmToMinutes(SIGN_IN_OPEN_HHMM);
     const close = hhmmToMinutes(SIGN_IN_CLOSE_HHMM);
-    if (open === null || close === null) return { open: true };
-    const mins = (now || new Date()).getHours() * 60 + (now || new Date()).getMinutes();
+    if (open === null || close === null) return { open: true, message: '' };
+    const d = now || new Date();
+    const mins = d.getHours() * 60 + d.getMinutes();
     let inWindow;
     if (open <= close) inWindow = mins >= open && mins <= close;
-    else inWindow = mins >= open || mins <= close; // overnight window
+    else inWindow = mins >= open || mins <= close;
     return {
       open: inWindow,
       message: inWindow ? '' : 'Sign-in opens between ' + SIGN_IN_OPEN_HHMM + ' and ' + SIGN_IN_CLOSE_HHMM + '.'
@@ -848,11 +844,6 @@
     if (isNaN(d.getTime())) return '';
     return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) +
       ' ' + d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
-  }
-  function fmtTime(iso){
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return '';
-    return d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
   }
   function fmtDuration(ms){
     if (!isFinite(ms) || ms < 0) return '—';
@@ -899,7 +890,6 @@
     for (let i = 0; i < attempts; i++) {
       const r = await apiPost(body);
       if (r.ok) return r;
-      // 4xx (except 429) is terminal — retrying won't help.
       if (r.status && r.status < 500 && r.status !== 429) return r;
       last = r;
       if (i < attempts - 1) await new Promise(res => setTimeout(res, 1200 * (i + 1)));
@@ -907,17 +897,46 @@
     return last || { ok:false, status:0, message:'Network error' };
   }
 
+  /**
+   * Fetch the open shift for an employee.
+   * Tries GET first; if the deployed edge function returns 405 (no GET branch),
+   * it falls back to POST with action:'get_open_shift'.
+   * If that also returns 405/404, we degrade to "no open shift" so the nurse
+   * at least reaches the sign-in form instead of being stuck.
+   */
   async function fetchOpenShift(employeeId){
-    const url = FN_URL + '?employee_id=' + encodeURIComponent(employeeId) + '&t=' + Date.now();
-    const res = await fetch(url, {
-      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
-      cache: 'no-store'
-    });
-    const text = await res.text();
-    let data = null;
-    try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
-    if (!res.ok) throw new Error((data && (data.error || data.message)) || ('HTTP ' + res.status));
-    return (data && data.open) ? data.open : null;
+    // 1) GET attempt
+    try {
+      const url = FN_URL + '?employee_id=' + encodeURIComponent(employeeId) + '&t=' + Date.now();
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const data = await res.json().catch(() => null);
+        return (data && data.open) ? data.open : null;
+      }
+      if (res.status !== 405 && res.status !== 404 && res.status !== 501) {
+        // A "real" error — surface it.
+        const text = await res.text();
+        let data = null; try { data = text ? JSON.parse(text) : null; } catch (e) {}
+        throw new Error((data && (data.error || data.message)) || ('HTTP ' + res.status));
+      }
+      // 405/404/501 → fall through to POST fallback.
+    } catch (e) {
+      // Network error on GET → try POST fallback too.
+    }
+
+    // 2) POST fallback
+    const r = await apiPost({ action: 'get_open_shift', employee_id: employeeId });
+    if (r.ok) return (r.data && r.data.open) ? r.data.open : null;
+
+    // 3) POST also not supported → degrade gracefully to "no open shift".
+    if (r.status === 405 || r.status === 404 || r.status === 501) {
+      return null;
+    }
+    throw new Error(r.message || 'Could not check shift');
   }
 
   /* ============================================================
@@ -993,10 +1012,7 @@
         const dup = r.status === 409;
         if (r.ok || dup) { removePending(entry.key); anySuccess = true; }
       }
-      if (anySuccess && !openShift && getSavedProfile()) {
-        // A queued sign-in landed — re-check whether we now have an open shift.
-        checkShiftStatus();
-      }
+      if (anySuccess && !openShift && getSavedProfile()) checkShiftStatus();
     } finally {
       flushInFlight = false;
     }
@@ -1008,7 +1024,7 @@
   });
 
   /* ============================================================
-     In-app update checker (unchanged)
+     In-app update checker
      ============================================================ */
   (function checkForAppUpdate(){
     try {
@@ -1048,59 +1064,59 @@
   /* ============================================================
      Element refs
      ============================================================ */
-  const profileGateArea   = document.getElementById('profileGateArea');
-  const profileConfirmArea= document.getElementById('profileConfirmArea');
-  const startProfileBtn   = document.getElementById('startProfileBtn');
-  const profileErr        = document.getElementById('profileErr');
-  const changeProfileLink = document.getElementById('changeProfileLink');
-  const confirmYesBtn     = document.getElementById('confirmYesBtn');
-  const confirmNoBtn      = document.getElementById('confirmNoBtn');
-  const confirmProfileLine= document.getElementById('confirmProfileLine');
-  const profileBar        = document.getElementById('profileBar');
-  const profileBarText    = document.getElementById('profileBarText');
-  const centreStaffFieldset = document.getElementById('centreStaffFieldset');
+  const profileGateArea    = document.getElementById('profileGateArea');
+  const profileConfirmArea = document.getElementById('profileConfirmArea');
+  const startProfileBtn    = document.getElementById('startProfileBtn');
+  const profileErr         = document.getElementById('profileErr');
+  const changeProfileLink  = document.getElementById('changeProfileLink');
+  const confirmYesBtn      = document.getElementById('confirmYesBtn');
+  const confirmNoBtn       = document.getElementById('confirmNoBtn');
+  const confirmProfileLine = document.getElementById('confirmProfileLine');
+  const profileBar         = document.getElementById('profileBar');
+  const profileBarText     = document.getElementById('profileBarText');
+  const centreStaffFieldset= document.getElementById('centreStaffFieldset');
 
-  const locationGateArea  = document.getElementById('locationGateArea');
-  const enableLocationBtn = document.getElementById('enableLocationBtn');
-  const gateErr           = document.getElementById('gateErr');
+  const locationGateArea   = document.getElementById('locationGateArea');
+  const enableLocationBtn  = document.getElementById('enableLocationBtn');
+  const gateErr            = document.getElementById('gateErr');
 
-  const cameraGateArea    = document.getElementById('cameraGateArea');
-  const enableCameraBtn   = document.getElementById('enableCameraBtn');
-  const cameraGateErr     = document.getElementById('cameraGateErr');
+  const cameraGateArea     = document.getElementById('cameraGateArea');
+  const enableCameraBtn    = document.getElementById('enableCameraBtn');
+  const cameraGateErr      = document.getElementById('cameraGateErr');
 
-  const deniedHelp        = document.getElementById('deniedHelp');
-  const cameraDeniedHelp  = document.getElementById('cameraDeniedHelp');
+  const deniedHelp         = document.getElementById('deniedHelp');
+  const cameraDeniedHelp   = document.getElementById('cameraDeniedHelp');
 
-  const statusCheckArea   = document.getElementById('statusCheckArea');
-  const statusErr         = document.getElementById('statusErr');
+  const statusCheckArea    = document.getElementById('statusCheckArea');
+  const statusErr          = document.getElementById('statusErr');
 
-  const signInFormArea    = document.getElementById('signInFormArea');
-  const signInForm        = document.getElementById('signInForm');
-  const signInSubmitBtn   = document.getElementById('signInSubmitBtn');
-  const signInErr         = document.getElementById('signInErr');
+  const signInFormArea     = document.getElementById('signInFormArea');
+  const signInForm         = document.getElementById('signInForm');
+  const signInSubmitBtn    = document.getElementById('signInSubmitBtn');
+  const signInErr          = document.getElementById('signInErr');
 
-  const signOutFormArea   = document.getElementById('signOutFormArea');
-  const signOutForm       = document.getElementById('signOutForm');
-  const signOutSubmitBtn  = document.getElementById('signOutSubmitBtn');
-  const signOutErr        = document.getElementById('signOutErr');
-  const shiftSummary      = document.getElementById('shiftSummary');
+  const signOutFormArea    = document.getElementById('signOutFormArea');
+  const signOutForm        = document.getElementById('signOutForm');
+  const signOutSubmitBtn   = document.getElementById('signOutSubmitBtn');
+  const signOutErr         = document.getElementById('signOutErr');
+  const shiftSummary       = document.getElementById('shiftSummary');
 
-  const successArea       = document.getElementById('successArea');
-  const successTitle      = document.getElementById('successTitle');
-  const successSubtitle   = document.getElementById('successSubtitle');
-  const successDetails    = document.getElementById('successDetails');
-  const successActionBtn  = document.getElementById('successActionBtn');
-  const successDoneLink   = document.getElementById('successDoneLink');
+  const successArea        = document.getElementById('successArea');
+  const successTitle       = document.getElementById('successTitle');
+  const successSubtitle    = document.getElementById('successSubtitle');
+  const successDetails     = document.getElementById('successDetails');
+  const successActionBtn   = document.getElementById('successActionBtn');
+  const successDoneLink    = document.getElementById('successDoneLink');
 
-  const photoCaptureBtn   = document.getElementById('photoCaptureBtn');
-  const photoPreviewWrap  = document.getElementById('photoPreviewWrap');
-  const photoPreview      = document.getElementById('photoPreview');
-  const photoRetakeBtn    = document.getElementById('photoRetakeBtn');
-  const camOverlay        = document.getElementById('camOverlay');
-  const camVideo          = document.getElementById('camVideo');
-  const camShutterBtn     = document.getElementById('camShutterBtn');
-  const camCancelBtn      = document.getElementById('camCancelBtn');
-  const camFlipBtn        = document.getElementById('camFlipBtn');
+  const photoCaptureBtn    = document.getElementById('photoCaptureBtn');
+  const photoPreviewWrap   = document.getElementById('photoPreviewWrap');
+  const photoPreview       = document.getElementById('photoPreview');
+  const photoRetakeBtn     = document.getElementById('photoRetakeBtn');
+  const camOverlay         = document.getElementById('camOverlay');
+  const camVideo           = document.getElementById('camVideo');
+  const camShutterBtn      = document.getElementById('camShutterBtn');
+  const camCancelBtn       = document.getElementById('camCancelBtn');
+  const camFlipBtn         = document.getElementById('camFlipBtn');
 
   /* ============================================================
      Profile
@@ -1421,7 +1437,6 @@
         if (status.state === 'granted') {
           locationGateArea.classList.add('hidden');
           acquireLocation();
-          // checkShiftStatus fires once location resolves (or immediately below)
           checkShiftStatus();
         } else {
           locationGateArea.classList.remove('hidden');
@@ -1640,7 +1655,7 @@
   }
 
   /* ============================================================
-     Sign-in form
+     Sign-in / sign-out forms
      ============================================================ */
   const dutyDateEl = document.getElementById('dutyDate');
   const dutyTimeEl = document.getElementById('dutyTime');
@@ -1653,14 +1668,6 @@
     dutyTimeEl.value = now.toTimeString().slice(0,5);
     outDateEl.value  = localDateStr(now);
     outTimeEl.value  = now.toTimeString().slice(0,5);
-    const win = isSignInWindowOpen(now);
-    const note = document.getElementById('signInWindowNote');
-    if (note) {
-      note.innerHTML = win.open
-        ? 'Sign-in is <b>open</b> now. Remember to sign out on the same day.'
-        : '⏳ <b>Sign-in is closed.</b> ' + escapeHtmlLocal(win.message);
-      note.classList.toggle('closed', !win.open);
-    }
     refreshSubmitState();
   }
 
@@ -1730,8 +1737,7 @@
       return;
     }
 
-    if (res.status === 409 && /already signed in/i.test(res.message || '')) {
-      // Was our own request that landed but the response was lost.
+    if (res.status === 409) {
       try {
         const open = await fetchOpenShift(payload.employee_id);
         if (open) {
@@ -1748,16 +1754,13 @@
     refreshSubmitState();
     queueSubmission(payload);
     signInErr.innerHTML = 'Could not reach the server: ' + escapeHtmlLocal(res.message || 'network error') +
-      '<br>Your entry is saved on this phone and will be retried automatically. You can also tap Retry.' +
+      '<br>Your entry is saved on this phone and will be retried automatically.' +
       '<br><button type="button" class="retry" id="retrySignInBtn">Retry now</button>';
     signInErr.style.display = 'block';
     const btn = document.getElementById('retrySignInBtn');
     if (btn) btn.addEventListener('click', () => { signInErr.style.display = 'none'; signInForm.requestSubmit(); });
   });
 
-  /* ============================================================
-     Sign-out form
-     ============================================================ */
   function openSignOutForm(row){
     hideAllScreens();
     profileBar.classList.remove('hidden');
@@ -1813,9 +1816,9 @@
 
     if (res.ok) {
       submitting = false;
-      const row = res.data && res.data.row ? res.data.row : null;
+      const row = res.data && res.data.row ? res.data.row : openShift;
       openShift = null;
-      showSignOutSuccess(row || openShiftSnapshot(), payload);
+      showSignOutSuccess(row, payload);
       return;
     }
 
@@ -1829,16 +1832,6 @@
     const btn = document.getElementById('retrySignOutBtn');
     if (btn) btn.addEventListener('click', () => { signOutErr.style.display = 'none'; signOutForm.requestSubmit(); });
   });
-
-  function openShiftSnapshot(){
-    return {
-      nurse_name: document.getElementById('nurseName').value,
-      employee_id: document.getElementById('employeeId').value,
-      patient_name: '',
-      sign_in_at: new Date().toISOString(),
-      sign_out_at: new Date().toISOString()
-    };
-  }
 
   /* ============================================================
      Success screens
@@ -1858,8 +1851,7 @@
     successTitle.textContent = 'Signed in';
     successSubtitle.textContent = 'Your sign-in, photo, time and location have been recorded.';
 
-    const signInAt = (row && row.sign_in_at) ||
-        new Date().toISOString();
+    const signInAt = (row && row.sign_in_at) || new Date().toISOString();
     const mapLink = `<a href="https://maps.google.com/?q=${payload.latitude},${payload.longitude}" target="_blank" style="color:var(--pulse-deep);">View on map</a>`;
 
     successDetails.innerHTML = `
@@ -1976,8 +1968,7 @@
   });
 
   /* ============================================================
-     Clock ticker — keeps date/time fields fresh and refreshes
-     the submit button state when the sign-in window opens/closes.
+     Clock ticker
      ============================================================ */
   setInterval(tickClock, 15000);
   tickClock();
