@@ -84,9 +84,7 @@
     display:flex; align-items:center; gap:14px;
     margin-bottom:18px; padding:4px 8px;
   }
-  .masthead img.logo{
-    height:44px; width:auto; flex-shrink:0; border-radius:8px;
-  }
+  .masthead img.logo{ height:44px; width:auto; flex-shrink:0; border-radius:8px; }
   .masthead .divider{ width:1px; height:34px; background:var(--line); flex-shrink:0; }
   .masthead h1{
     font-size:17px; margin:0; font-weight:700; color:var(--ink);
@@ -166,27 +164,17 @@
 
   .row2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 
-  /* ── Duty type cards ───────────────────────────── */
-  .duty-options{ display:flex; flex-direction:column; gap:9px; }
-  .duty-opt{
-    display:flex; align-items:center; gap:12px;
-    border:1.5px solid #CBD5D2; border-radius:var(--radius-sm);
-    padding:13px 16px; cursor:pointer; font-size:15px; font-weight:500;
-    background:#FBfCFC;
-    transition:border-color .15s, background .15s, transform .1s, box-shadow .15s;
+  /* ── Info / window notes ───────────────────────── */
+  .info-note{
+    margin-bottom:16px; padding:11px 14px;
+    border-radius:10px; background:var(--pulse-soft);
+    border:1px solid #BFDBCF; color:var(--pulse-deep);
+    font-size:12.5px; line-height:1.55;
   }
-  .duty-opt:hover{ border-color:#A9BEB8; background:#F7FAF9; }
-  .duty-opt:has(input:checked){
-    border-color:var(--pulse); background:var(--pulse-soft);
-    box-shadow:0 0 0 3px rgba(47,122,92,0.1);
+  .info-note.closed{
+    background:var(--danger-soft); border-color:#E3B4AB; color:var(--danger);
   }
-  .duty-opt:has(input:checked)::after{
-    content:"✓"; margin-left:auto; color:var(--pulse-deep);
-    font-weight:800; font-size:15px;
-  }
-  .duty-opt input{
-    accent-color:var(--pulse); width:18px; height:18px; flex-shrink:0;
-  }
+  .info-note b{ font-weight:700; }
 
   /* ── Buttons ───────────────────────────────────── */
   button[type=submit], .primary-btn{
@@ -245,7 +233,7 @@
   }
   .profile-confirm .whobox b{ color:var(--ink); font-weight:700; }
 
-  /* ── Error / warning / note ────────────────────── */
+  /* ── Error ─────────────────────────────────────── */
   .errmsg{
     font-size:13px; color:var(--danger); margin-top:12px;
     display:none; line-height:1.55;
@@ -253,20 +241,10 @@
     border:1px solid #E3B4AB; border-radius:9px;
   }
   .errmsg:not(:empty){ display:block; }
-
-  .late-warning{
-    display:none; margin-top:16px; padding:14px 16px;
-    border-radius:12px; background:var(--danger-soft);
-    border:1px solid #E3B4AB; color:var(--danger);
-    font-size:13px; line-height:1.6;
-  }
-  .late-warning b{ display:block; font-size:14px; margin-bottom:4px; }
-
-  .oncall-note{
-    display:none; margin-bottom:16px; padding:11px 14px;
-    border-radius:10px; background:var(--pulse-soft);
-    border:1px solid #BFDBCF; color:var(--pulse-deep);
-    font-size:12.5px; line-height:1.55;
+  .errmsg .retry{
+    display:inline-block; margin-top:9px; font-weight:700;
+    color:var(--pulse-deep); text-decoration:underline; cursor:pointer;
+    background:none; border:none; font-size:13px; padding:0;
   }
 
   .draft-restored-note{
@@ -327,11 +305,32 @@
     transition:background .15s;
   }
   .cam-side-btn:active{ background:#444; }
-  .errmsg .retry{
-    display:inline-block; margin-top:9px; font-weight:700;
-    color:var(--pulse-deep); text-decoration:underline; cursor:pointer;
-    background:none; border:none; font-size:13px; padding:0;
+
+  /* ── Status check ──────────────────────────────── */
+  .status-check{ text-align:center; padding:44px 12px 30px; }
+  .status-check h2{ margin:0 0 8px; font-size:18px; font-weight:700; }
+  .status-check p{ margin:0; color:var(--muted); font-size:14px; }
+  .spinner{
+    width:36px; height:36px; border-radius:50%;
+    border:3px solid var(--line); border-top-color:var(--pulse);
+    margin:0 auto 20px; animation:spin .8s linear infinite;
   }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* ── Shift summary box (sign-out) ──────────────── */
+  .summary-box{
+    background:linear-gradient(135deg, #F6F9F8, #EEF4F1);
+    border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px; font-size:13.5px; line-height:1.8;
+    margin-bottom:20px; overflow:hidden;
+  }
+  .summary-box b{ color:var(--ink); font-weight:700; }
+  .summary-box .summary-thumb{
+    width:68px; height:68px; object-fit:cover;
+    border-radius:10px; border:1px solid var(--line);
+    float:right; margin:0 0 8px 14px;
+  }
+  .summary-box .sum-row{ display:block; }
 
   /* ── Success screen ────────────────────────────── */
   .success{ text-align:center; padding:30px 12px 12px; }
@@ -369,21 +368,11 @@
     padding-bottom:2px;
   }
   .success a.newentry:hover{ color:var(--pulse); border-color:var(--pulse); }
-
-  /* ── Status banners (inside success) ───────────── */
-  .status-banner{
-    margin-top:12px; padding:11px 14px; border-radius:9px;
-    font-size:12.5px; line-height:1.55;
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  }
-  .status-banner b{ font-family:inherit; }
-  .status-late{ background:var(--danger-soft); border:1px solid #E3B4AB; color:var(--danger); }
-  .status-late b{ color:var(--danger); }
-  .status-ontime{ background:var(--pulse-soft); border:1px solid #BFDBCF; color:var(--pulse-deep); }
-  .status-ontime b{ color:var(--pulse-deep); }
+  .success .primary-btn{ margin-top:22px; }
 
   /* ── Hidden-screen utility ─────────────────────── */
-  #formArea.hidden,#successArea.hidden,
+  #formArea.hidden,#signInFormArea.hidden,#signOutFormArea.hidden,
+  #successArea.hidden,#statusCheckArea.hidden,
   #locationGateArea.hidden,#cameraGateArea.hidden,
   #deniedHelp.hidden,#cameraDeniedHelp.hidden,
   #profileGateArea.hidden,#profileConfirmArea.hidden,
@@ -445,11 +434,6 @@
     padding:10px 14px; background:var(--danger-soft);
     border:1px solid #E3B4AB; border-radius:9px;
   }
-  .locgate .gateerr .retry{
-    display:inline-block; margin-top:9px; font-weight:700;
-    color:var(--pulse-deep); text-decoration:underline; cursor:pointer;
-    background:none; border:none; font-size:13px; padding:0;
-  }
 
   /* ── Small screens ─────────────────────────────── */
   @media (max-width:420px){
@@ -463,7 +447,6 @@
     legend{ font-size:10px; }
   }
 
-  /* Respect reduced motion */
   @media (prefers-reduced-motion:reduce){
     *, *::before, *::after{
       animation-duration:0.01ms !important;
@@ -487,12 +470,13 @@
     <div class="divider"></div>
     <div>
       <h1>Nurses Daily Attendance</h1>
-      <p>Check-in with shift &amp; location details</p>
+      <p>Sign in and sign out with location</p>
     </div>
   </div>
 
   <div class="card">
 
+    <!-- ══════════ PROFILE GATE ══════════ -->
     <div id="profileGateArea" class="hidden">
       <fieldset>
         <legend>Your Details<svg class="pulseline" viewBox="0 0 200 20" preserveAspectRatio="none"><polyline points="0,10 60,10 72,2 84,18 96,10 200,10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></legend>
@@ -545,6 +529,7 @@
       <div class="photo-note" style="text-align:center; margin-top:10px;">Entered once — you won't need to re-type this again on this phone. If any of this is ever wrong, it can only be corrected from our records, not by re-entering it here.</div>
     </div>
 
+    <!-- ══════════ PROFILE CONFIRM ══════════ -->
     <div id="profileConfirmArea" class="hidden">
       <div class="profile-confirm">
         <p>This Employee ID is already registered to someone else:</p>
@@ -555,30 +540,33 @@
       </div>
     </div>
 
+    <!-- ══════════ LOCATION GATE ══════════ -->
     <div id="locationGateArea" class="hidden">
       <div class="locgate">
         <div class="pin">
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>
         <h2>Location access needed</h2>
-        <p>This form records your location with each check-in to confirm you're at the patient's location. Tap below and allow location access when your browser asks.</p>
+        <p>This form records your location when you sign in and sign out. Tap below and allow location access when your browser asks.</p>
         <button type="button" id="enableLocationBtn">Enable Location &amp; Continue</button>
         <div class="gateerr" id="gateErr"></div>
       </div>
     </div>
 
+    <!-- ══════════ CAMERA GATE ══════════ -->
     <div id="cameraGateArea" class="hidden">
       <div class="locgate">
         <div class="pin">
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
         <h2>Camera access needed</h2>
-        <p>A verification photo is required at check-in. Tap below and allow camera access when your browser asks — the photo is taken directly on this page, not in a separate app.</p>
+        <p>A verification photo is required when you sign in. Tap below and allow camera access when your browser asks — the photo is taken directly on this page, not in a separate app.</p>
         <button type="button" id="enableCameraBtn">Enable Camera &amp; Continue</button>
         <div class="gateerr" id="cameraGateErr"></div>
       </div>
     </div>
 
+    <!-- ══════════ DENIED: LOCATION ══════════ -->
     <div id="deniedHelp" class="hidden">
       <div class="denied-box">
         <span class="denied-title">&#9940; ATTENDANCE NOT RECORDED<br>Location is switched OFF for this app</span>
@@ -603,10 +591,11 @@
       </div>
     </div>
 
+    <!-- ══════════ DENIED: CAMERA ══════════ -->
     <div id="cameraDeniedHelp" class="hidden">
       <div class="denied-box">
         <span class="denied-title">&#9940; ATTENDANCE NOT RECORDED<br>Camera is switched OFF for this app</span>
-        <p style="margin:0 0 4px; font-size:14px;">A verification photo is required — attendance <b>cannot be submitted</b> until camera access is allowed. This page opens the camera directly, not a separate app — please follow the steps below and it will continue <b>automatically</b> once the camera is allowed.</p>
+        <p style="margin:0 0 4px; font-size:14px;">A verification photo is required to sign in — attendance <b>cannot be submitted</b> until camera access is allowed. This page opens the camera directly, not a separate app — please follow the steps below and it will continue <b>automatically</b> once the camera is allowed.</p>
         <h3>&#128241; If you are using the Apollo Attendance app:</h3>
         <ol>
           <li>Open your phone <b>Settings</b> &rarr; <b>Apps</b></li>
@@ -625,13 +614,25 @@
       </div>
     </div>
 
-    <div id="formArea" class="hidden">
-      <form id="checkinForm" novalidate>
+    <!-- ══════════ PROFILE BAR (shown with forms) ══════════ -->
+    <div id="profileBar" class="hidden">
+      &#9989; <b id="profileBarText"></b>
+      <a href="#" id="changeProfileLink">Not you?</a>
+    </div>
 
-        <div id="profileBar" class="hidden">
-          &#9989; <b id="profileBarText"></b>
-          <a href="#" id="changeProfileLink">Not you?</a>
-        </div>
+    <!-- ══════════ STATUS CHECK ══════════ -->
+    <div id="statusCheckArea" class="hidden">
+      <div class="status-check">
+        <div class="spinner"></div>
+        <h2>Checking your shift&hellip;</h2>
+        <p>Looking for an open sign-in.</p>
+        <div class="errmsg" id="statusErr" style="text-align:left;"></div>
+      </div>
+    </div>
+
+    <!-- ══════════ SIGN IN FORM ══════════ -->
+    <div id="signInFormArea" class="hidden">
+      <form id="signInForm" novalidate>
 
         <fieldset id="centreStaffFieldset">
           <legend>Centre &amp; Staff<svg class="pulseline" viewBox="0 0 200 20" preserveAspectRatio="none"><polyline points="0,10 60,10 72,2 84,18 96,10 200,10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></legend>
@@ -660,7 +661,7 @@
 
           <div class="field">
             <label for="employeeId">Employee ID<span class="req">*</span></label>
-            <input type="text" id="employeeId" required readonly placeholder="Enter your Employee ID">
+            <input type="text" id="employeeId" required readonly placeholder="Employee ID">
           </div>
 
           <div class="field">
@@ -675,7 +676,7 @@
         </fieldset>
 
         <fieldset>
-          <legend>Shift Details<svg class="pulseline" viewBox="0 0 200 20" preserveAspectRatio="none"><polyline points="0,10 60,10 72,2 84,18 96,10 200,10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></legend>
+          <legend>Sign-In Time<svg class="pulseline" viewBox="0 0 200 20" preserveAspectRatio="none"><polyline points="0,10 60,10 72,2 84,18 96,10 200,10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></legend>
           <div class="row2">
             <div class="field">
               <label for="dutyDate">Date<span class="req">*</span></label>
@@ -683,37 +684,22 @@
             </div>
             <div class="field">
               <label for="dutyTime">Time<span class="req">*</span></label>
-              <input type="time" id="dutyTime" required>
+              <input type="time" id="dutyTime" required readonly>
             </div>
           </div>
-          <div class="datetime-note">Date is captured automatically. If you missed marking on time, you may adjust the time — the actual sign-in time is always recorded separately for verification.</div>
-          <div class="field">
-            <label>Duty Type<span class="req">*</span></label>
-            <div class="duty-options">
-              <label class="duty-opt"><input type="radio" name="dutyType" value="12 Hrs Day" required> 12 Hrs Day</label>
-              <label class="duty-opt"><input type="radio" name="dutyType" value="12 Hrs Night"> 12 Hrs Night</label>
-              <label class="duty-opt"><input type="radio" name="dutyType" value="24 Hrs stay duty"> 24 Hrs stay duty</label>
-              <label class="duty-opt"><input type="radio" name="dutyType" value="On Call"> On Call</label>
-            </div>
-          </div>
-          <div class="late-warning" id="lateWarning"></div>
+          <div class="datetime-note">Date and time are captured automatically when you sign in.</div>
         </fieldset>
 
         <fieldset>
           <legend>Patient &amp; Location<svg class="pulseline" viewBox="0 0 200 20" preserveAspectRatio="none"><polyline points="0,10 60,10 72,2 84,18 96,10 200,10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></legend>
-          <div class="oncall-note" id="oncallNote">Patient name is not required for On Call — location is still required.</div>
           <div class="field">
-            <label for="patientName">Name of the Patient<span class="req" id="patientReq">*</span></label>
+            <label for="patientName">Name of the Patient<span class="req">*</span></label>
             <input type="text" id="patientName" required placeholder="Full name">
           </div>
           <div class="field">
             <label for="locationText">Location<span class="req">*</span></label>
             <input type="text" id="locationText" required placeholder="Enter location">
           </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Remarks<svg class="pulseline" viewBox="0 0 200 20" preserveAspectRatio="none"><polyline points="0,10 60,10 72,2 84,18 96,10 200,10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></legend>
           <div class="field" style="margin-bottom:0;">
             <label for="remarks">Remarks <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
             <textarea id="remarks" placeholder="Any additional notes"></textarea>
@@ -723,70 +709,232 @@
         <fieldset>
           <legend>Verification Photo<svg class="pulseline" viewBox="0 0 200 20" preserveAspectRatio="none"><polyline points="0,10 60,10 72,2 84,18 96,10 200,10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></legend>
           <div class="field" style="margin-bottom:0;">
-            <label>Take a photo at check-in<span class="req">*</span></label>
+            <label>Take a photo at sign-in<span class="req">*</span></label>
             <button type="button" id="photoCaptureBtn" class="photo-capture-btn">📷 Open Camera</button>
-            <div class="cam-overlay" id="camOverlay">
-              <video id="camVideo" autoplay playsinline muted></video>
-              <div class="cam-controls">
-                <button type="button" class="cam-side-btn" id="camCancelBtn" aria-label="Cancel">&#10005;</button>
-                <button type="button" class="cam-shutter" id="camShutterBtn" aria-label="Take photo"></button>
-                <button type="button" class="cam-side-btn" id="camFlipBtn" aria-label="Switch camera">&#8635;</button>
-              </div>
-            </div>
             <div class="photo-preview-wrap" id="photoPreviewWrap" style="display:none;">
-              <img id="photoPreview" class="photo-preview" alt="Check-in photo preview">
+              <img id="photoPreview" class="photo-preview" alt="Sign-in photo preview">
               <button type="button" id="photoRetakeBtn" class="photo-retake-btn">Retake</button>
             </div>
-            <div class="photo-note">Please capture a live photo using your camera at the time of check-in.</div>
+            <div class="photo-note">Please capture a live photo using your camera at the time of sign-in.</div>
           </div>
         </fieldset>
 
-        <button type="submit" id="submitBtn" disabled>Getting location…</button>
-        <div class="errmsg" id="errMsg"></div>
+        <button type="submit" id="signInSubmitBtn" disabled>Getting location…</button>
+        <div class="errmsg" id="signInErr"></div>
       </form>
     </div>
 
+    <!-- ══════════ SIGN OUT FORM ══════════ -->
+    <div id="signOutFormArea" class="hidden">
+      <form id="signOutForm" novalidate>
+
+        <fieldset>
+          <legend>Your Open Shift<svg class="pulseline" viewBox="0 0 200 20" preserveAspectRatio="none"><polyline points="0,10 60,10 72,2 84,18 96,10 200,10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></legend>
+          <div class="summary-box" id="shiftSummary"></div>
+          <div class="info-note" style="margin-bottom:0;">
+            Sign-out must be done on the same day as your sign-in. If you do not sign out, the day will be marked as a <b>missing sign-out</b>.
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Sign-Out Time<svg class="pulseline" viewBox="0 0 200 20" preserveAspectRatio="none"><polyline points="0,10 60,10 72,2 84,18 96,10 200,10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></legend>
+          <div class="row2">
+            <div class="field">
+              <label for="outDate">Date</label>
+              <input type="date" id="outDate" readonly>
+            </div>
+            <div class="field">
+              <label for="outTime">Time</label>
+              <input type="time" id="outTime" readonly>
+            </div>
+          </div>
+          <div class="datetime-note">Date and time are captured automatically when you sign out.</div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Location &amp; Remarks<svg class="pulseline" viewBox="0 0 200 20" preserveAspectRatio="none"><polyline points="0,10 60,10 72,2 84,18 96,10 200,10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></legend>
+          <div class="field">
+            <label for="outLocationText">Location<span class="req">*</span></label>
+            <input type="text" id="outLocationText" required placeholder="Enter location">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label for="outRemarks">Remarks <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
+            <textarea id="outRemarks" placeholder="Any additional notes"></textarea>
+          </div>
+        </fieldset>
+
+        <button type="submit" id="signOutSubmitBtn" disabled>Getting location…</button>
+        <div class="errmsg" id="signOutErr"></div>
+      </form>
+    </div>
+
+    <!-- ══════════ SUCCESS ══════════ -->
     <div id="successArea" class="hidden">
       <div class="success">
         <div class="check">
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
-        <h2>Attendance recorded</h2>
-        <p>Your shift entry and location have been logged.</p>
+        <h2 id="successTitle">Attendance recorded</h2>
+        <p id="successSubtitle"></p>
         <div class="details" id="successDetails"></div>
-        <a href="#" class="newentry" id="newEntryLink">Submit another entry</a>
+        <button type="button" class="primary-btn" id="successActionBtn" style="display:none;"></button>
+        <a href="#" class="newentry" id="successDoneLink" style="display:none;">Done</a>
       </div>
     </div>
 
   </div>
 </div>
 
+<!-- ══════════ CAMERA OVERLAY ══════════ -->
+<div class="cam-overlay" id="camOverlay">
+  <video id="camVideo" autoplay playsinline muted></video>
+  <div class="cam-controls">
+    <button type="button" class="cam-side-btn" id="camCancelBtn" aria-label="Cancel">&#10005;</button>
+    <button type="button" class="cam-shutter" id="camShutterBtn" aria-label="Take photo"></button>
+    <button type="button" class="cam-side-btn" id="camFlipBtn" aria-label="Switch camera">&#8635;</button>
+  </div>
+</div>
+
 <script>
   /* ============================================================
      SUPABASE CONFIG
-     ------------------------------------------------------------
-     Project URL: https://<project-ref>.supabase.co
-     Anon key   : Dashboard → Settings → API Keys → "Publishable key"
-                  (starts with sb_publishable_...)
      ============================================================ */
   const SUPABASE_URL      = 'https://pdgxpgvwgnptxdvffgos.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkZ3hwZ3Z3Z25wdHhkdmZmZ29zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwODE4NzQsImV4cCI6MjEwODY1Nzg3NH0.MT7IQIbwfLumBoUQ3PaXipoJti14z10rz8NBzqMMASo';
+  const FN_URL            = SUPABASE_URL + '/functions/v1/submit-attendance';
 
-  // Thin wrapper so every call goes through the same headers / error handling.
-  async function sbRequest(path, { method = 'GET', body = null, headers = {}, signal = null } = {}) {
-    const url = SUPABASE_URL + path;
+  /* ============================================================
+     SIGN-IN WINDOW
+     ------------------------------------------------------------
+     Nurses may only SIGN IN between these two times (device local
+     time). Sign-OUT is never restricted. Set to '00:00' / '23:59'
+     to allow sign-in at any time of day.
+     ============================================================ */
+  const SIGN_IN_OPEN_HHMM  = '00:00';
+  const SIGN_IN_CLOSE_HHMM = '23:59';
+
+  const DAY_LABEL = 'today';
+
+  /* ============================================================
+     Helpers
+     ============================================================ */
+  function hhmmToMinutes(t){
+    const p = String(t || '').split(':');
+    const h = parseInt(p[0], 10), m = parseInt(p[1], 10);
+    if (isNaN(h) || isNaN(m)) return null;
+    return h * 60 + m;
+  }
+  function isSignInWindowOpen(now){
+    const open = hhmmToMinutes(SIGN_IN_OPEN_HHMM);
+    const close = hhmmToMinutes(SIGN_IN_CLOSE_HHMM);
+    if (open === null || close === null) return { open: true };
+    const mins = (now || new Date()).getHours() * 60 + (now || new Date()).getMinutes();
+    let inWindow;
+    if (open <= close) inWindow = mins >= open && mins <= close;
+    else inWindow = mins >= open || mins <= close; // overnight window
+    return {
+      open: inWindow,
+      message: inWindow ? '' : 'Sign-in opens between ' + SIGN_IN_OPEN_HHMM + ' and ' + SIGN_IN_CLOSE_HHMM + '.'
+    };
+  }
+  function localDateStr(d){
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function escapeHtmlLocal(str){
+    return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function fmtDateTime(iso){
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) +
+      ' ' + d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+  }
+  function fmtTime(iso){
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+  }
+  function fmtDuration(ms){
+    if (!isFinite(ms) || ms < 0) return '—';
+    const totalMin = Math.round(ms / 60000);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return (h > 0 ? h + 'h ' : '') + m + 'm';
+  }
+
+  /* ============================================================
+     Edge-function calls
+     ============================================================ */
+  async function apiPost(body, timeoutMs){
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs || 25000);
+    try {
+      const res = await fetch(FN_URL, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body),
+        signal: ctrl.signal
+      });
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
+      if (res.ok) return { ok: true, status: res.status, data };
+      return {
+        ok: false, status: res.status,
+        message: (data && (data.error || data.message || data.hint)) || ('HTTP ' + res.status)
+      };
+    } catch (err) {
+      return { ok: false, status: 0, message: (err && err.message) || 'Network error' };
+    } finally {
+      clearTimeout(t);
+    }
+  }
+
+  async function apiPostWithRetry(body, attempts){
+    let last = null;
+    for (let i = 0; i < attempts; i++) {
+      const r = await apiPost(body);
+      if (r.ok) return r;
+      // 4xx (except 429) is terminal — retrying won't help.
+      if (r.status && r.status < 500 && r.status !== 429) return r;
+      last = r;
+      if (i < attempts - 1) await new Promise(res => setTimeout(res, 1200 * (i + 1)));
+    }
+    return last || { ok:false, status:0, message:'Network error' };
+  }
+
+  async function fetchOpenShift(employeeId){
+    const url = FN_URL + '?employee_id=' + encodeURIComponent(employeeId) + '&t=' + Date.now();
+    const res = await fetch(url, {
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+      cache: 'no-store'
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
+    if (!res.ok) throw new Error((data && (data.error || data.message)) || ('HTTP ' + res.status));
+    return (data && data.open) ? data.open : null;
+  }
+
+  /* ============================================================
+     Direct REST (profile table only)
+     ============================================================ */
+  async function sbRequest(path, { method = 'GET', body = null } = {}) {
     const opts = {
       method,
-      headers: Object.assign({
+      headers: {
         'apikey': SUPABASE_ANON_KEY,
         'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
         'Content-Type': 'application/json',
         'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
-      }, headers),
-      signal
+      }
     };
     if (body !== null) opts.body = typeof body === 'string' ? body : JSON.stringify(body);
-    const res = await fetch(url, opts);
+    const res = await fetch(SUPABASE_URL + path, opts);
     const text = await res.text();
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
@@ -798,145 +946,69 @@
   }
 
   /* ============================================================
-     submitWithRetry — fires the attendance INSERT at Supabase,
-     retries on network errors and "busy"/5xx responses.
+     Pending submission queue
      ============================================================ */
- async function submitWithRetry(payload, attemptsLeft){
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  const PENDING_KEY = 'apollo_pending_submissions_v2';
+  const PENDING_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
 
-  try {
-    const res = await fetch(SUPABASE_URL + '/functions/v1/submit-attendance', {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload),
-      signal: controller.signal
-    });
-
-    const text = await res.text();
-    let data = null;
-    try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
-
-    if (res.ok) {
-      return { result: 'success', row: data };
-    }
-
-    const msg = (data && data.error) || ('HTTP ' + res.status);
-    return { result: 'error', message: msg, status: res.status };
-  } catch (networkErr) {
-    if (attemptsLeft > 1) {
-      await new Promise(r => setTimeout(r, 1000));
-      return submitWithRetry(payload, attemptsLeft - 1);
-    }
-    throw networkErr;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
-  /* ============================================================
-     Pending-photo queue — persists not-yet-confirmed submissions
-     to the phone itself so a mid-flight failure doesn't lose the
-     photo. Retried on page load, 'online', and tab-visible.
-     ============================================================ */
-  const PENDING_PHOTOS_KEY = 'apollo_pending_photos_v1';
-  const PENDING_PHOTO_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
-
-  function getPendingPhotos(){
+  function getPending(){
     try {
-      const raw = localStorage.getItem(PENDING_PHOTOS_KEY);
+      const raw = localStorage.getItem(PENDING_KEY);
       if (!raw) return [];
       const list = JSON.parse(raw);
       return Array.isArray(list) ? list : [];
     } catch (e) { return []; }
   }
-
-  function savePendingPhoto(entry){
+  function savePending(entry){
     try {
-      const list = getPendingPhotos();
-      const filtered = list.filter(p => p && p.submission_id !== entry.submission_id);
-      filtered.push(entry);
-      localStorage.setItem(PENDING_PHOTOS_KEY, JSON.stringify(filtered));
+      const list = getPending().filter(p => p && p.key !== entry.key);
+      list.push(entry);
+      localStorage.setItem(PENDING_KEY, JSON.stringify(list));
     } catch (e) {}
   }
-
-  function removePendingPhoto(submissionId){
+  function removePending(key){
     try {
-      const list = getPendingPhotos().filter(p => p && p.submission_id !== submissionId);
-      localStorage.setItem(PENDING_PHOTOS_KEY, JSON.stringify(list));
+      const list = getPending().filter(p => p && p.key !== key);
+      localStorage.setItem(PENDING_KEY, JSON.stringify(list));
     } catch (e) {}
   }
-
-  async function uploadPhotoInBackground(payload){
-    if (!payload || !payload.submission_id) return;
-
-    const entry = {
-      submission_id: payload.submission_id,
-      payload: payload,
-      savedAt: Date.now()
-    };
-    savePendingPhoto(entry);
-
-    const backoff = [2000, 4000, 8000, 15000, 25000, 35000];
-
-    for (let i = 0; i < backoff.length; i++) {
-      try {
-        const result = await submitWithRetry(payload, 1);
-        if (result.result === 'success') {
-          removePendingPhoto(payload.submission_id);
-          return;
-        }
-        if (result.status === 409 || /duplicate key/i.test(result.message || '')) {
-          removePendingPhoto(payload.submission_id);
-          return;
-        }
-      } catch (err) {}
-      await new Promise(r => setTimeout(r, backoff[i]));
-    }
+  function queueSubmission(body){
+    const key = body.action + ':' + (body.submission_id || body.employee_id);
+    savePending({ key, body, savedAt: Date.now() });
   }
 
-  let retryPendingPhotosInFlight = false;
-  async function retryPendingPhotos(){
-    if (retryPendingPhotosInFlight) return;
-    const list = getPendingPhotos();
+  let flushInFlight = false;
+  async function flushPending(){
+    if (flushInFlight) return;
+    const list = getPending();
     if (!list.length) return;
-    retryPendingPhotosInFlight = true;
+    flushInFlight = true;
     try {
       const now = Date.now();
+      let anySuccess = false;
       for (const entry of list) {
-        if (!entry || !entry.submission_id || !entry.payload) {
-          removePendingPhoto(entry && entry.submission_id);
-          continue;
-        }
-        if (now - (entry.savedAt || 0) > PENDING_PHOTO_MAX_AGE_MS) {
-          removePendingPhoto(entry.submission_id);
-          continue;
-        }
-        try {
-          const result = await submitWithRetry(entry.payload, 1);
-          if (result.result === 'success' ||
-              result.status === 409 ||
-              /duplicate key/i.test(result.message || '')) {
-            removePendingPhoto(entry.submission_id);
-          }
-        } catch (err) {}
+        if (!entry || !entry.body) { removePending(entry && entry.key); continue; }
+        if (now - (entry.savedAt || 0) > PENDING_MAX_AGE_MS) { removePending(entry.key); continue; }
+        const r = await apiPost(entry.body);
+        const dup = r.status === 409;
+        if (r.ok || dup) { removePending(entry.key); anySuccess = true; }
+      }
+      if (anySuccess && !openShift && getSavedProfile()) {
+        // A queued sign-in landed — re-check whether we now have an open shift.
+        checkShiftStatus();
       }
     } finally {
-      retryPendingPhotosInFlight = false;
+      flushInFlight = false;
     }
   }
-  retryPendingPhotos();
-  window.addEventListener('online', retryPendingPhotos);
+  flushPending();
+  window.addEventListener('online', flushPending);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') retryPendingPhotos();
+    if (document.visibilityState === 'visible') flushPending();
   });
 
   /* ============================================================
-     In-app update checker
+     In-app update checker (unchanged)
      ============================================================ */
   (function checkForAppUpdate(){
     try {
@@ -949,12 +1021,11 @@
       if (!installedRaw) return;
       const installedVersion = parseInt(installedRaw, 10);
       fetch('apk-version.json?t=' + Date.now(), { cache: 'no-store' })
-        .then((r) => r.ok ? r.json() : null)
-        .then((info) => {
+        .then(r => r.ok ? r.json() : null)
+        .then(info => {
           if (!info || !info.versionCode || !info.apkUrl) return;
           if (info.versionCode <= installedVersion) return;
-          const dismissedFor = localStorage.getItem('apolloAppUpdateDismissedFor');
-          if (dismissedFor === String(info.versionCode)) return;
+          if (localStorage.getItem('apolloAppUpdateDismissedFor') === String(info.versionCode)) return;
           const banner = document.getElementById('updateBanner');
           const btn = document.getElementById('updateBannerBtn');
           const note = document.getElementById('updateBannerNote');
@@ -974,26 +1045,66 @@
     } catch (e) {}
   })();
 
-  const form = document.getElementById('checkinForm');
-  const submitBtn = document.getElementById('submitBtn');
-  const errMsg = document.getElementById('errMsg');
-  const locationGateArea = document.getElementById('locationGateArea');
-  const formArea = document.getElementById('formArea');
-  const enableLocationBtn = document.getElementById('enableLocationBtn');
-  const gateErr = document.getElementById('gateErr');
-
-  const profileGateArea = document.getElementById('profileGateArea');
-  const profileConfirmArea = document.getElementById('profileConfirmArea');
-  const startProfileBtn = document.getElementById('startProfileBtn');
-  const profileErr = document.getElementById('profileErr');
+  /* ============================================================
+     Element refs
+     ============================================================ */
+  const profileGateArea   = document.getElementById('profileGateArea');
+  const profileConfirmArea= document.getElementById('profileConfirmArea');
+  const startProfileBtn   = document.getElementById('startProfileBtn');
+  const profileErr        = document.getElementById('profileErr');
   const changeProfileLink = document.getElementById('changeProfileLink');
-  const confirmYesBtn = document.getElementById('confirmYesBtn');
-  const confirmNoBtn = document.getElementById('confirmNoBtn');
-  const confirmProfileLine = document.getElementById('confirmProfileLine');
-  const profileBar = document.getElementById('profileBar');
-  const profileBarText = document.getElementById('profileBarText');
+  const confirmYesBtn     = document.getElementById('confirmYesBtn');
+  const confirmNoBtn      = document.getElementById('confirmNoBtn');
+  const confirmProfileLine= document.getElementById('confirmProfileLine');
+  const profileBar        = document.getElementById('profileBar');
+  const profileBarText    = document.getElementById('profileBarText');
   const centreStaffFieldset = document.getElementById('centreStaffFieldset');
 
+  const locationGateArea  = document.getElementById('locationGateArea');
+  const enableLocationBtn = document.getElementById('enableLocationBtn');
+  const gateErr           = document.getElementById('gateErr');
+
+  const cameraGateArea    = document.getElementById('cameraGateArea');
+  const enableCameraBtn   = document.getElementById('enableCameraBtn');
+  const cameraGateErr     = document.getElementById('cameraGateErr');
+
+  const deniedHelp        = document.getElementById('deniedHelp');
+  const cameraDeniedHelp  = document.getElementById('cameraDeniedHelp');
+
+  const statusCheckArea   = document.getElementById('statusCheckArea');
+  const statusErr         = document.getElementById('statusErr');
+
+  const signInFormArea    = document.getElementById('signInFormArea');
+  const signInForm        = document.getElementById('signInForm');
+  const signInSubmitBtn   = document.getElementById('signInSubmitBtn');
+  const signInErr         = document.getElementById('signInErr');
+
+  const signOutFormArea   = document.getElementById('signOutFormArea');
+  const signOutForm       = document.getElementById('signOutForm');
+  const signOutSubmitBtn  = document.getElementById('signOutSubmitBtn');
+  const signOutErr        = document.getElementById('signOutErr');
+  const shiftSummary      = document.getElementById('shiftSummary');
+
+  const successArea       = document.getElementById('successArea');
+  const successTitle      = document.getElementById('successTitle');
+  const successSubtitle   = document.getElementById('successSubtitle');
+  const successDetails    = document.getElementById('successDetails');
+  const successActionBtn  = document.getElementById('successActionBtn');
+  const successDoneLink   = document.getElementById('successDoneLink');
+
+  const photoCaptureBtn   = document.getElementById('photoCaptureBtn');
+  const photoPreviewWrap  = document.getElementById('photoPreviewWrap');
+  const photoPreview      = document.getElementById('photoPreview');
+  const photoRetakeBtn    = document.getElementById('photoRetakeBtn');
+  const camOverlay        = document.getElementById('camOverlay');
+  const camVideo          = document.getElementById('camVideo');
+  const camShutterBtn     = document.getElementById('camShutterBtn');
+  const camCancelBtn      = document.getElementById('camCancelBtn');
+  const camFlipBtn        = document.getElementById('camFlipBtn');
+
+  /* ============================================================
+     Profile
+     ============================================================ */
   const PROFILE_KEY = 'apollo_attendance_nurse_profile_v1';
 
   function getSavedProfile(){
@@ -1010,9 +1121,9 @@
 
   function applyProfileToForm(p){
     document.getElementById('careCentre').value = p.careCentre;
-    document.getElementById('nurseName').value = p.nurseName;
+    document.getElementById('nurseName').value  = p.nurseName;
     document.getElementById('employeeId').value = p.employeeId;
-    document.getElementById('empType').value = p.empType || '';
+    document.getElementById('empType').value    = p.empType || '';
     profileBarText.textContent = p.nurseName + ' (' + p.employeeId + ') — ' + p.careCentre;
     centreStaffFieldset.classList.add('hidden');
     profileBar.classList.remove('hidden');
@@ -1025,11 +1136,9 @@
       '/rest/v1/nurse_profiles?employee_id=eq.' + encodeURIComponent(fields.employeeId) + '&select=*',
       { method: 'GET' }
     );
-
     if (existing && existing.length) {
       return { result: 'success', isNew: false, profile: existing[0] };
     }
-
     const inserted = await sbRequest('/rest/v1/nurse_profiles', {
       method: 'POST',
       body: {
@@ -1048,11 +1157,11 @@
   let pendingProfile = null;
 
   startProfileBtn.addEventListener('click', async () => {
-    const careCentre = document.getElementById('pfCareCentre').value;
-    const nurseName = document.getElementById('pfNurseName').value.trim();
-    const employeeIdRaw = document.getElementById('pfEmployeeId').value.trim();
+    const careCentre   = document.getElementById('pfCareCentre').value;
+    const nurseName    = document.getElementById('pfNurseName').value.trim();
+    const employeeIdRaw= document.getElementById('pfEmployeeId').value.trim();
     const mobileNumber = document.getElementById('pfMobileNumber').value.trim();
-    const empType = document.getElementById('pfEmpType').value;
+    const empType      = document.getElementById('pfEmpType').value;
 
     if (!careCentre || !nurseName || !employeeIdRaw || !empType) {
       profileErr.textContent = 'Please fill in Care Centre, Name, Employee ID and Emp Type.';
@@ -1069,11 +1178,7 @@
     startProfileBtn.textContent = 'Checking…';
 
     try {
-      const result = await submitProfileSetup({
-        careCentre, nurseName,
-        employeeId: employeeIdRaw,
-        mobileNumber, empType
-      });
+      const result = await submitProfileSetup({ careCentre, nurseName, employeeId: employeeIdRaw, mobileNumber, empType });
       startProfileBtn.disabled = false;
       startProfileBtn.textContent = 'Start';
 
@@ -1134,19 +1239,18 @@
     if (!window.confirm('Only do this if your Care Centre, Name or Employee ID above is wrong. Continue?')) return;
     const current = getSavedProfile();
     clearProfile();
-    locationGateArea.classList.add('hidden');
-    cameraGateArea.classList.add('hidden');
-    formArea.classList.add('hidden');
+    hideAllScreens();
     profileBar.classList.add('hidden');
     centreStaffFieldset.classList.remove('hidden');
     if (current) {
       document.getElementById('pfCareCentre').value = current.careCentre;
-      document.getElementById('pfNurseName').value = current.nurseName;
+      document.getElementById('pfNurseName').value  = current.nurseName;
       document.getElementById('pfEmployeeId').value = current.employeeId;
-      document.getElementById('pfEmpType').value = current.empType || '';
+      document.getElementById('pfEmpType').value    = current.empType || '';
     }
     profileErr.style.display = 'none';
     profileGateArea.classList.remove('hidden');
+    resetShiftState();
   });
 
   async function resyncProfileFromServer(profile){
@@ -1175,111 +1279,165 @@
     } catch (e) {}
   }
 
+  /* ============================================================
+     Screen management
+     ============================================================ */
+  function hideAllScreens(){
+    [profileGateArea, profileConfirmArea, locationGateArea, cameraGateArea,
+     deniedHelp, cameraDeniedHelp, statusCheckArea, signInFormArea,
+     signOutFormArea, successArea].forEach(el => el.classList.add('hidden'));
+  }
+
   let coords = null;
   let geoState = 'pending';
+  let openShift = null;
+  let shiftCheckStarted = false;
+  let submitting = false;
+  let cameraGateCleared = false;
 
-  function localDateStr(d){
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  }
-  const now = new Date();
-  document.getElementById('dutyDate').value = localDateStr(now);
-  document.getElementById('dutyTime').value = now.toTimeString().slice(0,5);
-
-  let timeManuallyEdited = false;
-  document.getElementById('dutyTime').addEventListener('input', () => { timeManuallyEdited = true; });
-
-  setInterval(() => {
-    const liveNow = new Date();
-    document.getElementById('dutyDate').value = localDateStr(liveNow);
-    if (!timeManuallyEdited) {
-      document.getElementById('dutyTime').value = liveNow.toTimeString().slice(0,5);
-    }
-    if (typeof checkLateWarning === 'function') checkLateWarning();
-  }, 30000);
-
-  const DAY_CUTOFF_MIN = 8 * 60 + 15;
-  const NIGHT_CUTOFF_MIN = 20 * 60 + 15;
-  const NIGHT_DUTY_EARLIEST_MIN = 17 * 60;
-  const NIGHT_DUTY_LATEST_AFTER_MIDNIGHT_MIN = 4 * 60;
-  const lateWarningEl = document.getElementById('lateWarning');
-
-  function timeStrToMinutes(t){
-    if (!t) return null;
-    const parts = t.split(':');
-    return (parseInt(parts[0], 10) * 60) + parseInt(parts[1], 10);
+  function resetShiftState(){
+    openShift = null;
+    shiftCheckStarted = false;
   }
 
-  function checkLateWarning(){
-    const dutyTypeEl = document.querySelector('input[name="dutyType"]:checked');
-    const mins = timeStrToMinutes(document.getElementById('dutyTime').value);
-    if (!dutyTypeEl || mins === null) {
-      lateWarningEl.style.display = 'none';
-      return { late: false, applies: false, tooEarly: false };
+  function gateIsActive(){ return !locationGateArea.classList.contains('hidden'); }
+
+  function refreshSubmitState(){
+    if (submitting) return;
+    const locOk = geoState === 'ok' && !!coords;
+
+    if (!signInFormArea.classList.contains('hidden')) {
+      const win = isSignInWindowOpen();
+      signInSubmitBtn.disabled = !(locOk && win.open);
+      signInSubmitBtn.textContent = !locOk ? 'Getting location…' : (!win.open ? 'Sign-in closed' : 'Sign In');
     }
-    if (dutyTypeEl.value === '12 Hrs Night' && mins >= NIGHT_DUTY_LATEST_AFTER_MIDNIGHT_MIN && mins < NIGHT_DUTY_EARLIEST_MIN) {
-      lateWarningEl.innerHTML = '⚠️ <b>Not a Night Duty Time</b>' +
-        'Night duty (12 Hrs Night) attendance can only be marked from 5:00 PM until 4:00 AM. ' +
-        'If you are actually on a different shift, please select the correct Duty Type above.';
-      lateWarningEl.style.display = 'block';
-      return { late: false, applies: true, tooEarly: true };
+    if (!signOutFormArea.classList.contains('hidden')) {
+      signOutSubmitBtn.disabled = !locOk;
+      signOutSubmitBtn.textContent = locOk ? 'Sign Out' : 'Getting location…';
     }
-    let cutoffLabel = null;
-    if (dutyTypeEl.value === '12 Hrs Day' && mins > DAY_CUTOFF_MIN) cutoffLabel = '8:15 AM';
-    else if (dutyTypeEl.value === '12 Hrs Night' && (mins > NIGHT_CUTOFF_MIN || mins < NIGHT_DUTY_LATEST_AFTER_MIDNIGHT_MIN)) cutoffLabel = '8:15 PM';
-    const applies = (dutyTypeEl.value === '12 Hrs Day' || dutyTypeEl.value === '12 Hrs Night');
-    if (cutoffLabel) {
-      lateWarningEl.innerHTML = '\u26A0\uFE0F <b>Late Check-In Recorded</b>' +
-        'You are marking attendance after the cut-off time of ' +
-        cutoffLabel + '. Please reach the patient\u2019s location and mark attendance on time. ' +
-        'It is mandatory to follow shift timing \u2014 repeated late check-ins may attract a penalty.';
-      lateWarningEl.style.display = 'block';
-      return { late: true, applies: true, tooEarly: false };
-    }
-    lateWarningEl.style.display = 'none';
-    return { late: false, applies: applies, tooEarly: false };
   }
-
-  document.querySelectorAll('input[name="dutyType"]').forEach(el => el.addEventListener('change', checkLateWarning));
-  document.getElementById('dutyTime').addEventListener('change', checkLateWarning);
-  document.getElementById('dutyTime').addEventListener('input', checkLateWarning);
-
-  const patientNameEl = document.getElementById('patientName');
-  const locationTextEl = document.getElementById('locationText');
-  const oncallNoteEl = document.getElementById('oncallNote');
-  const patientReqEl = document.getElementById('patientReq');
-
-  function updatePatientRequirement(){
-    const dutyTypeEl = document.querySelector('input[name="dutyType"]:checked');
-    const isOnCall = dutyTypeEl && dutyTypeEl.value === 'On Call';
-    patientNameEl.required = !isOnCall;
-    patientNameEl.disabled = isOnCall;
-    if (isOnCall) patientNameEl.value = '';
-    patientReqEl.style.display = isOnCall ? 'none' : 'inline';
-    oncallNoteEl.style.display = isOnCall ? 'block' : 'none';
-  }
-  document.querySelectorAll('input[name="dutyType"]').forEach(el => el.addEventListener('change', updatePatientRequirement));
 
   /* ============================================================
-     Verification photo
+     Location
      ============================================================ */
-  let capturedPhotoBase64 = '';
-  const photoCaptureBtn = document.getElementById('photoCaptureBtn');
-  const photoPreviewWrap = document.getElementById('photoPreviewWrap');
-  const photoPreview = document.getElementById('photoPreview');
-  const photoRetakeBtn = document.getElementById('photoRetakeBtn');
-  const camOverlay = document.getElementById('camOverlay');
-  const camVideo = document.getElementById('camVideo');
-  const camShutterBtn = document.getElementById('camShutterBtn');
-  const camCancelBtn = document.getElementById('camCancelBtn');
-  const camFlipBtn = document.getElementById('camFlipBtn');
+  let watchId = null;
+  let hasEverSucceeded = false;
+  let deniedPollTimer = null;
+  let autoRetryTimer = null;
+
+  function acquireLocation(){
+    geoState = 'pending'; coords = null; hasEverSucceeded = false;
+    if (gateIsActive()) {
+      gateErr.style.display = 'none';
+      enableLocationBtn.disabled = true;
+      enableLocationBtn.textContent = 'Requesting location…';
+    }
+    if (!('geolocation' in navigator)) {
+      showLocationBlocked('Location is not supported on this browser. Please use a different browser to submit attendance.');
+      return;
+    }
+    startWatching();
+  }
+
+  function startWatching(){
+    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+    watchId = navigator.geolocation.watchPosition(onLocationSuccess, onLocationFailure,
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 20000 });
+  }
+
+  function onLocationSuccess(pos){
+    coords = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
+    geoState = 'ok';
+    hasEverSucceeded = true;
+    hideDeniedScreen();
+    if (gateIsActive()) {
+      locationGateArea.classList.add('hidden');
+      enableLocationBtn.disabled = false;
+      enableLocationBtn.textContent = 'Enable Location & Continue';
+    }
+    refreshSubmitState();
+    if (!shiftCheckStarted && getSavedProfile()) {
+      shiftCheckStarted = true;
+      checkShiftStatus();
+    }
+  }
+
+  function onLocationFailure(err){
+    if (hasEverSucceeded) return;
+    const errCode = err ? err.code : '?';
+    const errText = err ? err.message : '';
+    const genericMsg = 'Getting your location… this can take a moment, especially indoors. Retrying automatically. (code ' + errCode + (errText ? ': ' + errText : '') + ')';
+    if (err && err.code === err.PERMISSION_DENIED) { showDeniedScreen(); return; }
+    showLocationBlocked(genericMsg);
+    clearTimeout(autoRetryTimer);
+    autoRetryTimer = setTimeout(startWatching, 8000);
+  }
+
+  function showDeniedScreen(){
+    geoState = 'blocked';
+    hideAllScreens();
+    clearInterval(deniedPollTimer);
+    deniedHelp.classList.remove('hidden');
+    deniedPollTimer = setInterval(startWatching, 4000);
+  }
+
+  function hideDeniedScreen(){
+    clearInterval(deniedPollTimer);
+    deniedPollTimer = null;
+    if (!deniedHelp.classList.contains('hidden')) deniedHelp.classList.add('hidden');
+  }
+
+  if ('permissions' in navigator) {
+    navigator.permissions.query({ name: 'geolocation' }).then((status) => {
+      status.onchange = () => { if (status.state === 'granted') { acquireLocation(); } };
+    }).catch(() => {});
+  }
+
+  function showLocationBlocked(message){
+    geoState = 'blocked';
+    if (gateIsActive()) {
+      enableLocationBtn.disabled = false;
+      enableLocationBtn.textContent = 'Enable Location & Continue';
+      gateErr.innerHTML = message;
+      gateErr.style.display = 'block';
+      return;
+    }
+    signInSubmitBtn.disabled = true;
+    signInSubmitBtn.textContent = 'Location required';
+    signOutSubmitBtn.disabled = true;
+    signOutSubmitBtn.textContent = 'Location required';
+    const target = !signOutFormArea.classList.contains('hidden') ? signOutErr : signInErr;
+    target.innerHTML = message + '<br><button type="button" class="retry" id="retryLocationBtn">Retry now</button>';
+    target.style.display = 'block';
+    const btn = document.getElementById('retryLocationBtn');
+    if (btn) btn.addEventListener('click', () => { target.style.display = 'none'; startWatching(); });
+  }
+
+  enableLocationBtn.addEventListener('click', acquireLocation);
+
+  function revealLocationGate(){
+    if ('permissions' in navigator) {
+      navigator.permissions.query({ name: 'geolocation' }).then((status) => {
+        if (status.state === 'granted') {
+          locationGateArea.classList.add('hidden');
+          acquireLocation();
+          // checkShiftStatus fires once location resolves (or immediately below)
+          checkShiftStatus();
+        } else {
+          locationGateArea.classList.remove('hidden');
+        }
+      }).catch(() => { locationGateArea.classList.remove('hidden'); });
+    } else { locationGateArea.classList.remove('hidden'); }
+  }
+
+  /* ============================================================
+     Camera
+     ============================================================ */
   let camStream = null;
   let camFacing = 'user';
-
-  const cameraGateArea = document.getElementById('cameraGateArea');
-  const enableCameraBtn = document.getElementById('enableCameraBtn');
-  const cameraGateErr = document.getElementById('cameraGateErr');
-  let cameraGateCleared = false;
+  let capturedPhotoBase64 = '';
   let cameraDeniedFromGate = false;
+  let cameraDeniedPollTimer = null;
 
   function stopCamera(){
     if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
@@ -1297,7 +1455,7 @@
 
   async function startCamera(){
     const attempts = [
-      { video: { facingMode: { ideal: camFacing }, width: { ideal: 640 }, height: { ideal: 480 } }, audio: false },
+      { video: { facingMode: { ideal: camFacing }, width: { ideal: 960 }, height: { ideal: 720 } }, audio: false },
       { video: { facingMode: { ideal: camFacing } }, audio: false },
       { video: true, audio: false }
     ];
@@ -1317,8 +1475,8 @@
 
   photoCaptureBtn.addEventListener('click', async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      errMsg.textContent = 'This browser cannot open the camera on this page. Please update Chrome, or use a different phone, to submit attendance.';
-      errMsg.style.display = 'block';
+      signInErr.textContent = 'This browser cannot open the camera on this page. Please update Chrome, or use a different phone, to submit attendance.';
+      signInErr.style.display = 'block';
       return;
     }
     try { await startCamera(); hideCameraDeniedScreen(); }
@@ -1333,13 +1491,42 @@
     try { await startCamera(); } catch (err) { stopCamera(); handleCameraError(err); }
   });
 
-  const cameraDeniedHelp = document.getElementById('cameraDeniedHelp');
-  let cameraDeniedPollTimer = null;
+  camShutterBtn.addEventListener('click', () => {
+    if (!camVideo.videoWidth) return;
+    try {
+      const maxWidth = 640;
+      const scale = Math.min(1, maxWidth / camVideo.videoWidth);
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.round(camVideo.videoWidth * scale);
+      canvas.height = Math.round(camVideo.videoHeight * scale);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas 2D context unavailable');
+      ctx.drawImage(camVideo, 0, 0, canvas.width, canvas.height);
+      stopCamera();
+      capturedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.6);
+      canvas.width = 0; canvas.height = 0;
+      photoPreview.src = capturedPhotoBase64;
+      photoPreviewWrap.style.display = 'block';
+      photoCaptureBtn.style.display = 'none';
+      saveDraft();
+    } catch (err) {
+      stopCamera();
+      capturedPhotoBase64 = '';
+      signInErr.textContent = 'Could not capture the photo — your phone may be low on memory. Please close other apps in the background and tap "Open Camera" to try again.';
+      signInErr.style.display = 'block';
+    }
+  });
+
+  photoRetakeBtn.addEventListener('click', () => {
+    capturedPhotoBase64 = '';
+    photoPreviewWrap.style.display = 'none';
+    photoCaptureBtn.style.display = 'block';
+    saveDraft();
+  });
 
   function showCameraDeniedScreen(fromGate){
     cameraDeniedFromGate = !!fromGate;
-    cameraGateArea.classList.add('hidden');
-    formArea.classList.add('hidden');
+    hideAllScreens();
     cameraDeniedHelp.classList.remove('hidden');
     clearInterval(cameraDeniedPollTimer);
     cameraDeniedPollTimer = setInterval(() => {
@@ -1356,16 +1543,17 @@
     if (!cameraDeniedHelp.classList.contains('hidden')) {
       cameraDeniedHelp.classList.add('hidden');
       cameraGateCleared = true;
-      formArea.classList.remove('hidden');
+      openSignInForm();
     }
   }
 
   function handleCameraError(err){
     if (err && err.name === 'NotAllowedError') { showCameraDeniedScreen(false); return; }
-    errMsg.innerHTML = 'Could not open the camera. Please close other apps that might be using it, then try again.' +
+    signInErr.innerHTML = 'Could not open the camera. Please close other apps that might be using it, then try again.' +
       '<br><button type="button" class="retry" id="retryCameraBtn">Retry now</button>';
-    errMsg.style.display = 'block';
-    document.getElementById('retryCameraBtn').addEventListener('click', () => photoCaptureBtn.click());
+    signInErr.style.display = 'block';
+    const btn = document.getElementById('retryCameraBtn');
+    if (btn) btn.addEventListener('click', () => { signInErr.style.display = 'none'; photoCaptureBtn.click(); });
   }
 
   if ('permissions' in navigator) {
@@ -1396,8 +1584,7 @@
       await startCamera();
       stopCamera();
       cameraGateCleared = true;
-      cameraGateArea.classList.add('hidden');
-      formArea.classList.remove('hidden');
+      openSignInForm();
     } catch (err) {
       enableCameraBtn.disabled = false;
       enableCameraBtn.textContent = 'Enable Camera & Continue';
@@ -1408,67 +1595,346 @@
   }
   enableCameraBtn.addEventListener('click', acquireCameraGate);
 
-  function proceedAfterLocation(){
-    if (cameraGateCleared) { formArea.classList.remove('hidden'); return; }
-    if ('permissions' in navigator) {
-      navigator.permissions.query({ name: 'camera' }).then((status) => {
-        if (status.state === 'granted') { cameraGateCleared = true; formArea.classList.remove('hidden'); }
-        else { cameraGateArea.classList.remove('hidden'); }
-      }).catch(() => { cameraGateArea.classList.remove('hidden'); });
-    } else { cameraGateArea.classList.remove('hidden'); }
+  /* ============================================================
+     Shift status: sign-in vs sign-out
+     ============================================================ */
+  async function checkShiftStatus(){
+    const profile = getSavedProfile();
+    if (!profile) return;
+
+    hideAllScreens();
+    profileBar.classList.remove('hidden');
+    statusCheckArea.classList.remove('hidden');
+    statusErr.style.display = 'none';
+
+    try {
+      const open = await fetchOpenShift(profile.employeeId);
+      if (open) {
+        openShift = open;
+        openSignOutForm(open);
+      } else {
+        openShift = null;
+        proceedToSignIn();
+      }
+    } catch (err) {
+      statusErr.innerHTML = 'Could not check your shift: ' + escapeHtmlLocal(err.message) +
+        '<br><button type="button" class="retry" id="retryStatusBtn">Retry now</button>';
+      statusErr.style.display = 'block';
+      const btn = document.getElementById('retryStatusBtn');
+      if (btn) btn.addEventListener('click', () => { statusErr.style.display = 'none'; checkShiftStatus(); });
+    }
   }
 
-  camShutterBtn.addEventListener('click', () => {
-    if (!camVideo.videoWidth) return;
-    try {
-      const maxWidth = 360;
-      const scale = Math.min(1, maxWidth / camVideo.videoWidth);
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.round(camVideo.videoWidth * scale);
-      canvas.height = Math.round(camVideo.videoHeight * scale);
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Canvas 2D context unavailable');
-      ctx.drawImage(camVideo, 0, 0, canvas.width, canvas.height);
-      stopCamera();
-      capturedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.5);
-      canvas.width = 0; canvas.height = 0;
-      photoPreview.src = capturedPhotoBase64;
-      photoPreviewWrap.style.display = 'block';
-      photoCaptureBtn.style.display = 'none';
-      try { saveDraft(); } catch (e) {}
-    } catch (err) {
-      stopCamera();
-      capturedPhotoBase64 = '';
-      errMsg.textContent = 'Could not capture the photo — your phone may be low on memory. Please close other apps in the background and tap "Take Photo" to try again.';
-      errMsg.style.display = 'block';
+  function proceedToSignIn(){
+    hideAllScreens();
+    profileBar.classList.remove('hidden');
+    if (cameraGateCleared) { openSignInForm(); return; }
+    if ('permissions' in navigator) {
+      navigator.permissions.query({ name: 'camera' }).then((status) => {
+        if (status.state === 'granted') { cameraGateCleared = true; openSignInForm(); }
+        else { cameraGateArea.classList.remove('hidden'); }
+      }).catch(() => { cameraGateArea.classList.remove('hidden'); });
+    } else {
+      cameraGateArea.classList.remove('hidden');
     }
-  });
+  }
 
-  photoRetakeBtn.addEventListener('click', () => {
-    capturedPhotoBase64 = '';
-    photoPreviewWrap.style.display = 'none';
-    photoCaptureBtn.style.display = 'block';
+  /* ============================================================
+     Sign-in form
+     ============================================================ */
+  const dutyDateEl = document.getElementById('dutyDate');
+  const dutyTimeEl = document.getElementById('dutyTime');
+  const outDateEl  = document.getElementById('outDate');
+  const outTimeEl  = document.getElementById('outTime');
+
+  function tickClock(){
+    const now = new Date();
+    dutyDateEl.value = localDateStr(now);
+    dutyTimeEl.value = now.toTimeString().slice(0,5);
+    outDateEl.value  = localDateStr(now);
+    outTimeEl.value  = now.toTimeString().slice(0,5);
+    const win = isSignInWindowOpen(now);
+    const note = document.getElementById('signInWindowNote');
+    if (note) {
+      note.innerHTML = win.open
+        ? 'Sign-in is <b>open</b> now. Remember to sign out on the same day.'
+        : '⏳ <b>Sign-in is closed.</b> ' + escapeHtmlLocal(win.message);
+      note.classList.toggle('closed', !win.open);
+    }
+    refreshSubmitState();
+  }
+
+  let draftRestored = false;
+  function openSignInForm(){
+    hideAllScreens();
+    profileBar.classList.remove('hidden');
+    signInFormArea.classList.remove('hidden');
+    tickClock();
+    if (!draftRestored) { draftRestored = true; restoreDraftIfAny(); }
+    refreshSubmitState();
+  }
+
+  signInForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    signInErr.style.display = 'none';
+
+    const profile = getSavedProfile();
+    if (!profile) { clearProfile(); hideAllScreens(); profileGateArea.classList.remove('hidden'); return; }
+
+    if (!isSignInWindowOpen().open) {
+      signInErr.textContent = isSignInWindowOpen().message;
+      signInErr.style.display = 'block';
+      return;
+    }
+    if (!signInForm.checkValidity()) { signInForm.reportValidity(); return; }
+    if (!capturedPhotoBase64) {
+      signInErr.textContent = 'Please take a verification photo before signing in.';
+      signInErr.style.display = 'block';
+      return;
+    }
+    if (geoState !== 'ok' || !coords) {
+      showLocationBlocked('Location has not been captured yet. Please wait a moment or tap Retry.');
+      return;
+    }
+
+    submitting = true;
+    signInSubmitBtn.disabled = true;
+    signInSubmitBtn.textContent = 'Signing in…';
+
+    const submissionId = Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+    const payload = {
+      action: 'sign_in',
+      submission_id: submissionId,
+      care_centre:   document.getElementById('careCentre').value,
+      nurse_name:    document.getElementById('nurseName').value.trim(),
+      employee_id:   document.getElementById('employeeId').value.trim(),
+      emp_type:      document.getElementById('empType').value,
+      duty_date:     dutyDateEl.value,
+      duty_time:     dutyTimeEl.value,
+      patient_name:  document.getElementById('patientName').value.trim(),
+      location_text: document.getElementById('locationText').value.trim(),
+      remarks:       document.getElementById('remarks').value.trim() || null,
+      latitude:      coords.lat,
+      longitude:     coords.lng,
+      accuracy_meters: Math.round(coords.accuracy),
+      photo_base64:  capturedPhotoBase64
+    };
+
+    const res = await apiPostWithRetry(payload, 3);
+
+    if (res.ok) {
+      submitting = false;
+      clearDraft();
+      openShift = res.data && res.data.row ? res.data.row : null;
+      showSignInSuccess(payload, openShift);
+      return;
+    }
+
+    if (res.status === 409 && /already signed in/i.test(res.message || '')) {
+      // Was our own request that landed but the response was lost.
+      try {
+        const open = await fetchOpenShift(payload.employee_id);
+        if (open) {
+          submitting = false;
+          clearDraft();
+          openShift = open;
+          showSignInSuccess(payload, open);
+          return;
+        }
+      } catch (err) {}
+    }
+
+    submitting = false;
+    refreshSubmitState();
+    queueSubmission(payload);
+    signInErr.innerHTML = 'Could not reach the server: ' + escapeHtmlLocal(res.message || 'network error') +
+      '<br>Your entry is saved on this phone and will be retried automatically. You can also tap Retry.' +
+      '<br><button type="button" class="retry" id="retrySignInBtn">Retry now</button>';
+    signInErr.style.display = 'block';
+    const btn = document.getElementById('retrySignInBtn');
+    if (btn) btn.addEventListener('click', () => { signInErr.style.display = 'none'; signInForm.requestSubmit(); });
   });
 
   /* ============================================================
-     Draft autosave / restore
+     Sign-out form
      ============================================================ */
-  const DRAFT_KEY = 'apollo_attendance_draft_v1';
+  function openSignOutForm(row){
+    hideAllScreens();
+    profileBar.classList.remove('hidden');
+    signOutFormArea.classList.remove('hidden');
+    signOutErr.style.display = 'none';
+
+    const thumb = row.photo_base64
+      ? '<img class="summary-thumb" src="' + row.photo_base64 + '" alt="Sign-in photo">'
+      : '';
+
+    shiftSummary.innerHTML =
+      thumb +
+      '<span class="sum-row"><b>Nurse:</b> ' + escapeHtmlLocal(row.nurse_name) + ' (' + escapeHtmlLocal(row.employee_id) + ')</span>' +
+      '<span class="sum-row"><b>Patient:</b> ' + escapeHtmlLocal(row.patient_name) + '</span>' +
+      '<span class="sum-row"><b>Signed in:</b> ' + escapeHtmlLocal(fmtDateTime(row.sign_in_at)) + '</span>' +
+      '<span class="sum-row"><b>Sign-in location:</b> ' + escapeHtmlLocal(row.location_text) + '</span>' +
+      (row.remarks ? '<span class="sum-row"><b>Sign-in remarks:</b> ' + escapeHtmlLocal(row.remarks) + '</span>' : '');
+
+    const outLoc = document.getElementById('outLocationText');
+    if (!outLoc.value) outLoc.value = row.location_text || '';
+
+    tickClock();
+    refreshSubmitState();
+  }
+
+  signOutForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    signOutErr.style.display = 'none';
+
+    if (!openShift) { checkShiftStatus(); return; }
+    if (!signOutForm.checkValidity()) { signOutForm.reportValidity(); return; }
+    if (geoState !== 'ok' || !coords) {
+      showLocationBlocked('Location has not been captured yet. Please wait a moment or tap Retry.');
+      return;
+    }
+
+    submitting = true;
+    signOutSubmitBtn.disabled = true;
+    signOutSubmitBtn.textContent = 'Signing out…';
+
+    const payload = {
+      action: 'sign_out',
+      submission_id: openShift.submission_id,
+      employee_id:   openShift.employee_id,
+      location_text: document.getElementById('outLocationText').value.trim(),
+      remarks:       document.getElementById('outRemarks').value.trim() || null,
+      latitude:      coords.lat,
+      longitude:     coords.lng,
+      accuracy_meters: Math.round(coords.accuracy)
+    };
+
+    const res = await apiPostWithRetry(payload, 3);
+
+    if (res.ok) {
+      submitting = false;
+      const row = res.data && res.data.row ? res.data.row : null;
+      openShift = null;
+      showSignOutSuccess(row || openShiftSnapshot(), payload);
+      return;
+    }
+
+    submitting = false;
+    refreshSubmitState();
+    queueSubmission(payload);
+    signOutErr.innerHTML = 'Could not reach the server: ' + escapeHtmlLocal(res.message || 'network error') +
+      '<br>Your sign-out is saved on this phone and will be retried automatically.' +
+      '<br><button type="button" class="retry" id="retrySignOutBtn">Retry now</button>';
+    signOutErr.style.display = 'block';
+    const btn = document.getElementById('retrySignOutBtn');
+    if (btn) btn.addEventListener('click', () => { signOutErr.style.display = 'none'; signOutForm.requestSubmit(); });
+  });
+
+  function openShiftSnapshot(){
+    return {
+      nurse_name: document.getElementById('nurseName').value,
+      employee_id: document.getElementById('employeeId').value,
+      patient_name: '',
+      sign_in_at: new Date().toISOString(),
+      sign_out_at: new Date().toISOString()
+    };
+  }
+
+  /* ============================================================
+     Success screens
+     ============================================================ */
+  function resetSuccessButtons(){
+    successActionBtn.style.display = 'none';
+    successActionBtn.onclick = null;
+    successDoneLink.style.display = 'none';
+    successDoneLink.onclick = null;
+  }
+
+  function showSignInSuccess(payload, row){
+    hideAllScreens();
+    successArea.classList.remove('hidden');
+    resetSuccessButtons();
+
+    successTitle.textContent = 'Signed in';
+    successSubtitle.textContent = 'Your sign-in, photo, time and location have been recorded.';
+
+    const signInAt = (row && row.sign_in_at) ||
+        new Date().toISOString();
+    const mapLink = `<a href="https://maps.google.com/?q=${payload.latitude},${payload.longitude}" target="_blank" style="color:var(--pulse-deep);">View on map</a>`;
+
+    successDetails.innerHTML = `
+      <div><b>Nurse:</b> ${escapeHtmlLocal(payload.nurse_name)} (${escapeHtmlLocal(payload.employee_id)})</div>
+      <div><b>Centre:</b> ${escapeHtmlLocal(payload.care_centre)}</div>
+      <div><b>Patient:</b> ${escapeHtmlLocal(payload.patient_name)}</div>
+      <div><b>Signed in:</b> ${escapeHtmlLocal(fmtDateTime(signInAt))}</div>
+      <div><b>Location:</b> ${escapeHtmlLocal(payload.location_text)}</div>
+      <div><b>GPS:</b> ${Number(payload.latitude).toFixed(5)}, ${Number(payload.longitude).toFixed(5)} &nbsp; ${mapLink}</div>
+    `;
+
+    successActionBtn.textContent = 'Sign Out now';
+    successActionBtn.style.display = 'block';
+    successActionBtn.onclick = () => {
+      if (openShift) openSignOutForm(openShift);
+      else checkShiftStatus();
+    };
+  }
+
+  function showSignOutSuccess(row, payload){
+    hideAllScreens();
+    successArea.classList.remove('hidden');
+    resetSuccessButtons();
+
+    const safeRow = row || {};
+    successTitle.textContent = 'Signed out';
+    successSubtitle.textContent = 'Your sign-out time and location have been recorded.';
+
+    const signInAt  = safeRow.sign_in_at || null;
+    const signOutAt = safeRow.sign_out_at || new Date().toISOString();
+    const durationMs = signInAt
+      ? (new Date(signOutAt).getTime() - new Date(signInAt).getTime())
+      : null;
+    const durationStr = durationMs !== null ? fmtDuration(durationMs) : '—';
+
+    const mapLink = `<a href="https://maps.google.com/?q=${payload.latitude},${payload.longitude}" target="_blank" style="color:var(--pulse-deep);">View on map</a>`;
+
+    successDetails.innerHTML = `
+      <div><b>Nurse:</b> ${escapeHtmlLocal(safeRow.nurse_name || '')} (${escapeHtmlLocal(safeRow.employee_id || '')})</div>
+      <div><b>Patient:</b> ${escapeHtmlLocal(safeRow.patient_name || '—')}</div>
+      <div><b>Signed in:</b> ${escapeHtmlLocal(signInAt ? fmtDateTime(signInAt) : '—')}</div>
+      <div><b>Signed out:</b> ${escapeHtmlLocal(fmtDateTime(signOutAt))}</div>
+      <div><b>Total duration:</b> ${durationStr}</div>
+      <div><b>Sign-out location:</b> ${escapeHtmlLocal(payload.location_text)}</div>
+      <div><b>GPS:</b> ${Number(payload.latitude).toFixed(5)}, ${Number(payload.longitude).toFixed(5)} &nbsp; ${mapLink}</div>
+    `;
+
+    successDoneLink.textContent = 'Done';
+    successDoneLink.style.display = 'inline-block';
+    successDoneLink.onclick = (e) => {
+      e.preventDefault();
+      window.location.reload();
+    };
+  }
+
+  /* ============================================================
+     Draft autosave / restore (sign-in form only)
+     ============================================================ */
+  const DRAFT_KEY = 'apollo_attendance_draft_v2';
   const DRAFT_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 
   function saveDraft(){
     try {
-      const dutyTypeEl = document.querySelector('input[name="dutyType"]:checked');
+      const pn = document.getElementById('patientName').value;
+      const lt = document.getElementById('locationText').value;
+      const rm = document.getElementById('remarks').value;
+      if (!capturedPhotoBase64 && !pn && !lt && !rm) {
+        localStorage.removeItem(DRAFT_KEY);
+        return;
+      }
       const draft = {
         savedAt: Date.now(),
-        careCentre: document.getElementById('careCentre').value,
-        nurseName: document.getElementById('nurseName').value,
-        employeeId: document.getElementById('employeeId').value,
-        empType: document.getElementById('empType').value,
-        patientName: document.getElementById('patientName').value,
-        locationText: document.getElementById('locationText').value,
-        remarks: document.getElementById('remarks').value,
-        dutyType: dutyTypeEl ? dutyTypeEl.value : '',
+        patientName: pn,
+        locationText: lt,
+        remarks: rm,
         photoBase64: capturedPhotoBase64 || ''
       };
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
@@ -1484,329 +1950,41 @@
       if (!raw) return;
       draft = JSON.parse(raw);
     } catch (e) { return; }
-    if (!draft || !draft.savedAt || (Date.now() - draft.savedAt) > DRAFT_MAX_AGE_MS) { clearDraft(); return; }
-    if (draft.careCentre) document.getElementById('careCentre').value = draft.careCentre;
-    if (draft.nurseName) document.getElementById('nurseName').value = draft.nurseName;
-    if (draft.employeeId) document.getElementById('employeeId').value = draft.employeeId;
-    if (draft.empType) document.getElementById('empType').value = draft.empType;
-    if (draft.patientName) document.getElementById('patientName').value = draft.patientName;
-    if (draft.locationText) document.getElementById('locationText').value = draft.locationText;
-    if (draft.remarks) document.getElementById('remarks').value = draft.remarks;
-    if (draft.dutyType) {
-      const radio = document.querySelector('input[name="dutyType"][value="' + CSS.escape(draft.dutyType) + '"]');
-      if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
+    if (!draft || !draft.savedAt || (Date.now() - draft.savedAt) > DRAFT_MAX_AGE_MS) {
+      clearDraft(); return;
     }
+    if (draft.patientName)  document.getElementById('patientName').value  = draft.patientName;
+    if (draft.locationText) document.getElementById('locationText').value = draft.locationText;
+    if (draft.remarks)      document.getElementById('remarks').value      = draft.remarks;
     if (draft.photoBase64) {
       capturedPhotoBase64 = draft.photoBase64;
       photoPreview.src = capturedPhotoBase64;
       photoPreviewWrap.style.display = 'block';
       photoCaptureBtn.style.display = 'none';
     }
-    const restoredNote = document.createElement('div');
-    restoredNote.className = 'draft-restored-note';
-    restoredNote.textContent = '\u2713 Your previous entry was restored — please continue below.';
-    form.insertBefore(restoredNote, form.firstChild);
-    setTimeout(() => restoredNote.remove(), 6000);
+    const note = document.createElement('div');
+    note.className = 'draft-restored-note';
+    note.textContent = '\u2713 Your previous entry was restored — please continue below.';
+    signInForm.insertBefore(note, signInForm.firstChild);
+    setTimeout(() => note.remove(), 6000);
   }
 
-  ['careCentre','nurseName','employeeId','empType','patientName','locationText','remarks'].forEach(id => {
-    document.getElementById(id).addEventListener('input', saveDraft);
-    document.getElementById(id).addEventListener('change', saveDraft);
-  });
-  document.querySelectorAll('input[name="dutyType"]').forEach(el => el.addEventListener('change', saveDraft));
-  photoRetakeBtn.addEventListener('click', saveDraft);
-
-  restoreDraftIfAny();
-
-  const employeeIdEl = document.getElementById('employeeId');
-  employeeIdEl.addEventListener('input', () => {
-    const cursor = employeeIdEl.selectionStart;
-    const before = employeeIdEl.value;
-    const beforeCursor = before.slice(0, cursor);
-    const cleaned = before.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-    const removedBeforeCursor = beforeCursor.length - beforeCursor.replace(/[^a-zA-Z0-9]/g, '').length;
-    employeeIdEl.value = cleaned;
-    const newCursor = Math.max(0, cursor - removedBeforeCursor);
-    employeeIdEl.setSelectionRange(newCursor, newCursor);
+  ['patientName','locationText','remarks'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', saveDraft);
+    el.addEventListener('change', saveDraft);
   });
 
   /* ============================================================
-     Geolocation
+     Clock ticker — keeps date/time fields fresh and refreshes
+     the submit button state when the sign-in window opens/closes.
      ============================================================ */
-  function gateIsActive(){ return !locationGateArea.classList.contains('hidden'); }
-  let watchId = null;
-  let hasEverSucceeded = false;
-
-  function acquireLocation(){
-    geoState = 'pending'; coords = null; hasEverSucceeded = false;
-    if (gateIsActive()) {
-      gateErr.style.display = 'none';
-      enableLocationBtn.disabled = true;
-      enableLocationBtn.textContent = 'Requesting location…';
-    } else {
-      errMsg.style.display = 'none';
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Getting location…';
-    }
-    if (!('geolocation' in navigator)) {
-      showLocationBlocked('Location is not supported on this browser. Please use a different browser to submit attendance.');
-      return;
-    }
-    startWatching();
-  }
-
-  function startWatching(){
-    if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-    watchId = navigator.geolocation.watchPosition(onLocationSuccess, onLocationFailure,
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 20000 });
-  }
-
-  function onLocationSuccess(pos){
-    coords = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
-    geoState = 'ok'; hasEverSucceeded = true;
-    hideDeniedScreen();
-    if (gateIsActive()) { locationGateArea.classList.add('hidden'); proceedAfterLocation(); }
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit Attendance';
-    errMsg.style.display = 'none';
-  }
-
-  let autoRetryTimer = null;
-
-  function onLocationFailure(err){
-    if (hasEverSucceeded) return;
-    const errCode = err ? err.code : '?';
-    const errText = err ? err.message : '';
-    const genericMsg = 'Getting your location… this can take a moment, especially indoors. Retrying automatically. (code ' + errCode + (errText ? ': ' + errText : '') + ')';
-    if (err && err.code === err.PERMISSION_DENIED) { showDeniedScreen(); return; }
-    showLocationBlocked(genericMsg);
-    clearTimeout(autoRetryTimer);
-    autoRetryTimer = setTimeout(startWatching, 8000);
-  }
-
-  const deniedHelp = document.getElementById('deniedHelp');
-  let deniedPollTimer = null;
-
-  function showDeniedScreen(){
-    geoState = 'blocked';
-    locationGateArea.classList.add('hidden');
-    cameraGateArea.classList.add('hidden');
-    formArea.classList.add('hidden');
-    clearInterval(cameraDeniedPollTimer);
-    cameraDeniedPollTimer = null;
-    cameraDeniedHelp.classList.add('hidden');
-    deniedHelp.classList.remove('hidden');
-    clearInterval(deniedPollTimer);
-    deniedPollTimer = setInterval(startWatching, 4000);
-  }
-
-  function hideDeniedScreen(){
-    clearInterval(deniedPollTimer);
-    deniedPollTimer = null;
-    if (!deniedHelp.classList.contains('hidden')) { deniedHelp.classList.add('hidden'); proceedAfterLocation(); }
-  }
-
-  if ('permissions' in navigator) {
-    navigator.permissions.query({ name: 'geolocation' }).then((status) => {
-      status.onchange = () => { if (status.state === 'granted') acquireLocation(); };
-    }).catch(() => {});
-  }
-
-  function showLocationBlocked(message){
-    geoState = 'blocked';
-    if (gateIsActive()) {
-      enableLocationBtn.disabled = false;
-      enableLocationBtn.textContent = 'Enable Location & Continue';
-      gateErr.innerHTML = message;
-      gateErr.style.display = 'block';
-      return;
-    }
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Location required';
-    errMsg.innerHTML = message + '<br><button type="button" class="retry" id="retryLocationBtn">Retry now</button>';
-    errMsg.style.display = 'block';
-    document.getElementById('retryLocationBtn').addEventListener('click', startWatching);
-  }
-
-  enableLocationBtn.addEventListener('click', acquireLocation);
-
-  function revealLocationGate(){
-    profileGateArea.classList.add('hidden');
-    profileConfirmArea.classList.add('hidden');
-    if ('permissions' in navigator) {
-      navigator.permissions.query({ name: 'geolocation' }).then((status) => {
-        if (status.state === 'granted') {
-          locationGateArea.classList.add('hidden');
-          proceedAfterLocation();
-          acquireLocation();
-        } else {
-          locationGateArea.classList.remove('hidden');
-        }
-      }).catch(() => { locationGateArea.classList.remove('hidden'); });
-    } else { locationGateArea.classList.remove('hidden'); }
-  }
+  setInterval(tickClock, 15000);
+  tickClock();
 
   /* ============================================================
-     Submit — writes the attendance row into Supabase.
+     Service worker
      ============================================================ */
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    errMsg.style.display = 'none';
-
-    if (!form.checkValidity()) { form.reportValidity(); return; }
-
-    const dutyTypeEl = document.querySelector('input[name="dutyType"]:checked');
-    if (!dutyTypeEl) {
-      errMsg.textContent = 'Please select a Duty Type.';
-      errMsg.style.display = 'block';
-      return;
-    }
-
-    const preSubmitCheck = checkLateWarning();
-    if (preSubmitCheck.tooEarly) {
-      errMsg.textContent = 'Night duty (12 Hrs Night) attendance can only be marked from 5:00 PM until 4:00 AM.';
-      errMsg.style.display = 'block';
-      return;
-    }
-
-    if (!capturedPhotoBase64) {
-      errMsg.textContent = 'Please take a verification photo before submitting.';
-      errMsg.style.display = 'block';
-      return;
-    }
-
-    if (geoState !== 'ok' || !coords) {
-      showLocationBlocked('Location has not been captured yet. Please wait a moment or tap Retry.');
-      return;
-    }
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Submitting…';
-
-    const lateCheck = checkLateWarning();
-    const punctuality = lateCheck.applies ? (lateCheck.late ? 'Late' : 'On Time') : 'N/A';
-    const submissionId = Date.now() + '_' + Math.random().toString(36).slice(2, 10);
-
-    const payload = {
-      submission_id: submissionId,
-      care_centre:   document.getElementById('careCentre').value,
-      nurse_name:    document.getElementById('nurseName').value.trim(),
-      employee_id:   document.getElementById('employeeId').value.trim(),
-      emp_type:      document.getElementById('empType').value,
-      duty_date:     document.getElementById('dutyDate').value,
-      duty_time:     document.getElementById('dutyTime').value,
-      patient_name:  document.getElementById('patientName').value.trim() || null,
-      location_text: document.getElementById('locationText').value.trim(),
-      duty_type:     dutyTypeEl.value,
-      remarks:       document.getElementById('remarks').value.trim() || null,
-      latitude:      coords.lat,
-      longitude:     coords.lng,
-      accuracy_meters: Math.round(coords.accuracy),
-      punctuality:   punctuality,
-      photo_base64:  capturedPhotoBase64
-    };
-
-    try {
-      const result = await submitWithRetry(payload, 3);
-
-      if (result.result === 'error') {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Attendance';
-        const raw = result.message || '';
-        if (result.status === 409 || /duplicate key|unique constraint/i.test(raw)) {
-          errMsg.textContent = 'This attendance entry already exists for today\u2019s shift.';
-        } else if (/invalid api key/i.test(raw)) {
-          errMsg.textContent = 'Could not submit: invalid API key. Please contact your admin.';
-        } else {
-          errMsg.textContent = 'Could not submit: ' + raw;
-        }
-        errMsg.style.display = 'block';
-        return;
-      }
-
-      clearDraft();
-      showSuccess(payload, {
-        punctuality: punctuality,
-        dutyDate: payload.duty_date,
-        serverDutyTime: payload.duty_time
-      });
-      uploadPhotoInBackground(payload);
-    } catch (err) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Submit Attendance';
-      const raw = (err && err.message) || '';
-      errMsg.textContent = /took too long/i.test(raw)
-        ? raw
-        : 'Could not submit right now. Check your connection and try again.';
-      errMsg.style.display = 'block';
-    }
-  });
-
-  function showSuccess(payload, serverResult){
-    const mapLink = `<a href="https://maps.google.com/?q=${payload.latitude},${payload.longitude}" target="_blank" style="color:var(--pulse-deep);">View on map</a>`;
-    const truePunctuality = (serverResult && serverResult.punctuality) || payload.punctuality || 'N/A';
-    const trueTime = (serverResult && serverResult.serverDutyTime) || payload.duty_time;
-
-    let statusLine = '';
-    if (truePunctuality === 'Late') {
-      statusLine = `<div class="status-banner status-late">\u26A0\uFE0F <b>Late Check-In Recorded</b> — actual sign-in time: ${trueTime}. Please mark attendance on time going forward.</div>`;
-    } else if (truePunctuality === 'On Time') {
-      statusLine = `<div class="status-banner status-ontime">\u2705 <b>On Time</b> — sign-in time: ${trueTime}.</div>`;
-    }
-
-    const detailsHtml = `
-      <div><b>Nurse:</b> ${escapeHtmlLocal(payload.nurse_name)} (${escapeHtmlLocal(payload.employee_id)})</div>
-      <div><b>Centre:</b> ${escapeHtmlLocal(payload.care_centre)}</div>
-      <div><b>Emp Type:</b> ${escapeHtmlLocal(payload.emp_type || '—')}</div>
-      <div><b>Patient:</b> ${escapeHtmlLocal(payload.patient_name) || 'Not applicable (On Call)'}</div>
-      <div><b>Shift:</b> ${escapeHtmlLocal(payload.duty_type)} — ${escapeHtmlLocal(payload.duty_date)} ${escapeHtmlLocal(trueTime)}</div>
-      <div><b>Location:</b> ${escapeHtmlLocal(payload.location_text)}</div>
-      <div><b>GPS:</b> ${Number(payload.latitude).toFixed(5)}, ${Number(payload.longitude).toFixed(5)} &nbsp; ${mapLink}</div>
-      ${statusLine}
-    `;
-
-    document.getElementById('successDetails').innerHTML = detailsHtml;
-    document.getElementById('formArea').classList.add('hidden');
-    document.getElementById('successArea').classList.remove('hidden');
-  }
-
-  function escapeHtmlLocal(str){
-    return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  document.getElementById('newEntryLink').addEventListener('click', (e) => {
-    e.preventDefault();
-    document.getElementById('successArea').classList.add('hidden');
-    document.getElementById('formArea').classList.remove('hidden');
-    form.reset();
-    const savedProfile = getSavedProfile();
-    if (savedProfile) applyProfileToForm(savedProfile);
-    lateWarningEl.style.display = 'none';
-    updatePatientRequirement();
-    capturedPhotoBase64 = '';
-    photoPreviewWrap.style.display = 'none';
-    photoCaptureBtn.style.display = 'block';
-    const now2 = new Date();
-    document.getElementById('dutyDate').value = localDateStr(now2);
-    document.getElementById('dutyTime').value = now2.toTimeString().slice(0,5);
-    timeManuallyEdited = false;
-    acquireLocation();
-  });
-
-  /* ============================================================
-     Entry point
-     ============================================================ */
-  (function initProfileGate(){
-    const profile = getSavedProfile();
-    if (profile) {
-      applyProfileToForm(profile);
-      revealLocationGate();
-      resyncProfileFromServer(profile);
-    } else {
-      profileGateArea.classList.remove('hidden');
-    }
-  })();
-
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('service-worker.js').catch(() => {});
@@ -1818,6 +1996,23 @@
       window.location.reload();
     });
   }
+
+  /* ============================================================
+     Init
+     ============================================================ */
+  (function initApp(){
+    const profile = getSavedProfile();
+    if (profile) {
+      applyProfileToForm(profile);
+      revealLocationGate();
+      resyncProfileFromServer(profile);
+    } else {
+      hideAllScreens();
+      profileBar.classList.add('hidden');
+      profileGateArea.classList.remove('hidden');
+    }
+    refreshSubmitState();
+  })();
 </script>
 </body>
 </html>
