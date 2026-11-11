@@ -21,7 +21,7 @@
   .brand{ display:flex; align-items:center; gap:10px; margin-right:14px; }
   .brand img{ height:36px; width:auto; border-radius:6px; }
   .brand h1{ font-size:15px; margin:0; font-weight:700; white-space:nowrap; }
-  
+
   .topbar label{ font-size:11px; font-weight:600; color:var(--muted); display:block; margin-bottom:3px; }
   .field-group{ display:flex; flex-direction:column; }
   .topbar input, .topbar select{
@@ -36,6 +36,16 @@
   .topbar button:hover{ background:var(--pulse); }
   .count-badge{ font-size:12px; color:var(--muted); align-self:flex-end; padding-bottom:8px; white-space:nowrap; }
 
+  /* Search field with clear button */
+  .search-group{ position:relative; min-width:180px; }
+  .search-group input{ padding-right:28px; width:100%; }
+  .search-clear{
+    position:absolute; right:8px; bottom:7px; cursor:pointer;
+    background:none; border:none; color:var(--muted); font-size:15px; line-height:1;
+    padding:0; display:none;
+  }
+  .search-clear.visible{ display:block; }
+
   .map-wrap{ position:relative; height:calc(100% - 66px); }
   #map{ position:absolute; top:0; left:0; right:0; bottom:0; }
 
@@ -46,6 +56,8 @@
   }
   .legend div{ display:flex; align-items:center; gap:6px; margin:3px 0; }
   .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .dot.ring{ background:transparent; border:2.5px solid #B23A2E; }
+  .dot.fill{ background:#2F7A5C; }
 
   .leaflet-popup-content{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:12.5px; line-height:1.6; }
   .leaflet-popup-content b{ color:var(--pulse-deep); }
@@ -53,6 +65,8 @@
   .popup-badge{ display:inline-block; padding:1px 7px; border-radius:5px; font-size:11px; font-weight:700; margin-left:4px; }
   .popup-badge.late{ background:#FBEAE7; color:var(--danger); }
   .popup-badge.ontime{ background:#EAF3EF; color:var(--pulse-deep); }
+  .popup-badge.signedout{ background:#EAF3EF; color:var(--pulse-deep); }
+  .popup-badge.signedin{ background:#FFF6E5; color:#8A5A1F; }
 
   .custom-pin-icon{ background:transparent; border:none; }
   .pin-wrap{ display:flex; flex-direction:column; align-items:center; cursor:pointer; }
@@ -60,7 +74,25 @@
     width:40px; height:40px; border-radius:50%; border:3px solid #8A94A6;
     background:#fff; box-shadow:0 2px 6px rgba(22,35,59,0.28);
     display:flex; align-items:center; justify-content:center; overflow:hidden;
+    position:relative;
   }
+  /* Signed-in (still on duty) = filled green + pulsing dot */
+  .pin-avatar.on-duty{ border-color:#2F7A5C; }
+  .pin-avatar.on-duty::after{
+    content:''; position:absolute; top:-3px; right:-3px;
+    width:12px; height:12px; border-radius:50%;
+    background:#E8B84B; border:2px solid #fff;
+    box-shadow:0 0 0 0 rgba(232,184,75,0.7);
+    animation:pulse 1.8s infinite;
+  }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 rgba(232,184,75,0.7); }
+    70%{ box-shadow:0 0 0 8px rgba(232,184,75,0); }
+    100%{ box-shadow:0 0 0 0 rgba(232,184,75,0); }
+  }
+  /* Signed-out = grey ring */
+  .pin-avatar.signed-out{ border-color:#8A94A6; opacity:0.85; }
+
   .pin-avatar-img{ width:100%; height:100%; object-fit:cover; display:block; }
   .pin-avatar-initials{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:13px; font-weight:700; color:var(--ink); }
   .pin-label{
@@ -74,15 +106,29 @@
     background:var(--card); border:1px solid var(--line); border-radius:8px;
     padding:8px 14px; font-size:12.5px; color:var(--muted); display:none;
   }
+
+  .no-results{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:900;
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:16px 22px; font-size:13px; color:var(--muted); display:none;
+    box-shadow:0 4px 16px rgba(22,35,59,0.12); text-align:center;
+  }
+  .no-results.visible{ display:block; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <div class="brand">
-    <!-- Logo is added back here -->
     <img src="logo.png" alt="Apollo Home Care">
     <h1>📍 Attendance Map</h1>
+  </div>
+
+  <!-- NEW: Employee ID / Name search -->
+  <div class="field-group search-group">
+    <label for="searchBox">Search Emp ID / Name</label>
+    <input type="text" id="searchBox" placeholder="e.g. AHC1234 or Vishnu" autocomplete="off">
+    <button type="button" class="search-clear" id="searchClear" aria-label="Clear search">✕</button>
   </div>
 
   <div class="field-group">
@@ -128,6 +174,14 @@
       <option value="On Call">On Call</option>
     </select>
   </div>
+  <div class="field-group">
+    <label for="statusFilter">Status</label>
+    <select id="statusFilter">
+      <option value="">All</option>
+      <option value="in">Signed In (on duty)</option>
+      <option value="out">Signed Out</option>
+    </select>
+  </div>
 
   <button id="loadBtn">Load</button>
   <div class="count-badge" id="countBadge"></div>
@@ -136,57 +190,69 @@
 <div class="map-wrap">
   <div id="map"></div>
   <div class="loading-note" id="loadingNote">Loading attendance…</div>
+  <div class="no-results" id="noResults">No matching records.<br><span style="font-size:11.5px;">Try clearing the search or widening the date range.</span></div>
   <div class="legend">
-    <div><span class="dot" style="background:#2F7A5C;"></span> 12 Hrs Day</div>
-    <div><span class="dot" style="background:#1F6FB2;"></span> 12 Hrs Night</div>
-    <div><span class="dot" style="background:#D98E1F;"></span> 24 Hrs stay duty</div>
-    <div><span class="dot" style="background:#8A4FB8;"></span> On Call</div>
+    <div><span class="dot fill"></span> Signed in (on duty)</div>
+    <div><span class="dot ring"></span> Signed out</div>
+    <div style="margin-top:6px;font-size:11px;color:var(--muted);">Dot colour inside pin = duty type</div>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // Configuration
+  // ── Configuration ────────────────────────────────────────
   const SUPABASE_URL      = 'https://pdgxpgvwgnptxdvffgos.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_FpqLF9z4wAxV7Jd-7ZLk2A_j0u74m80';
-  
-  // Initialize Map
-  const map = L.map('map').setView([20.5937, 78.9629], 5); // Center of India
-  
-  // Using OpenStreetMap as it reliably serves raster (.png) tiles for free without a key
+
+  // ── Map init ─────────────────────────────────────────────
+  const map = L.map('map').setView([20.5937, 78.9629], 5);
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors',
     maxZoom: 19
   }).addTo(map);
 
-  let markers = [];
+  let allRecords = [];   // every row fetched from Supabase
+  let markers    = [];   // currently drawn markers
 
+  // ── Utilities ────────────────────────────────────────────
   function getInitials(name){
     return String(name || '?').trim().split(/\s+/).map(w => w[0] || '').slice(0, 2).join('').toUpperCase();
   }
-
   function shortName(name){
     const n = String(name || '').trim();
     return n.length > 13 ? n.slice(0, 12) + '…' : n;
   }
-
-  function colorFor(dutyType){
-    if (dutyType === '12 Hrs Night') return '#1F6FB2';
+  function escapeHtml(str){
+    return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function dutyColor(dutyType){
+    if (dutyType === '12 Hrs Night')     return '#1F6FB2';
     if (dutyType === '24 Hrs stay duty') return '#D98E1F';
-    if (dutyType === 'On Call') return '#8A4FB8';
+    if (dutyType === 'On Call')          return '#8A4FB8';
     return '#2F7A5C'; // 12 Hrs Day
   }
+  function isSignedOut(r){
+    return !!(r.sign_out_at && String(r.sign_out_at).trim());
+  }
 
+  // ── Marker icon ──────────────────────────────────────────
   function buildMarkerIcon(r){
-    const color = colorFor(r.duty_type);
+    const color    = dutyColor(r.duty_type);
+    const signedOut = isSignedOut(r);
     const avatarInner = r.photo_base64
       ? '<img src="' + escapeHtml(r.photo_base64) + '" class="pin-avatar-img">'
       : '<span class="pin-avatar-initials">' + escapeHtml(getInitials(r.nurse_name)) + '</span>';
 
+    const avatarClass = signedOut ? 'pin-avatar signed-out' : 'pin-avatar on-duty';
+    const labelColor  = signedOut ? '#8A94A6' : color;
+
     const html =
       '<div class="pin-wrap">' +
-        '<div class="pin-avatar" style="border-color:' + color + ';">' + avatarInner + '</div>' +
-        '<div class="pin-label" style="border-color:' + color + ';">' + escapeHtml(shortName(r.nurse_name)) + '</div>' +
+        '<div class="' + avatarClass + '">' + avatarInner + '</div>' +
+        '<div class="pin-label" style="border-color:' + labelColor + ';">' +
+          escapeHtml(shortName(r.nurse_name)) +
+        '</div>' +
       '</div>';
 
     return L.divIcon({
@@ -198,6 +264,54 @@
     });
   }
 
+  // ── Popup content ────────────────────────────────────────
+  function buildPopupHtml(r){
+    const out = isSignedOut(r);
+    const statusBadge = out
+      ? '<span class="popup-badge signedout">Signed Out</span>'
+      : '<span class="popup-badge signedin">On Duty</span>';
+
+    const punctBadge = r.punctuality === 'Late'
+      ? '<span class="popup-badge late">Late</span>'
+      : (r.punctuality === 'On Time' ? '<span class="popup-badge ontime">On Time</span>' : '');
+
+    const photoHtml = r.photo_base64
+      ? '<img src="' + escapeHtml(r.photo_base64) + '" alt="Check-in photo" class="popup-photo">'
+      : '';
+
+    // Sign-in vs sign-out location
+    const signInLine =
+      'In: ' + escapeHtml(r.duty_date || '—') + ' ' + escapeHtml(r.duty_time || '') +
+      (r.location_text ? '<br>&nbsp;&nbsp;&nbsp;@ ' + escapeHtml(r.location_text) : '');
+
+    const signOutLine = out
+      ? '<br><b>Sign-out:</b> ' + escapeHtml(formatDateTime(r.sign_out_at)) +
+        (r.sign_out_location ? '<br>&nbsp;&nbsp;&nbsp;@ ' + escapeHtml(r.sign_out_location) : '') +
+        (r.sign_out_latitude && r.sign_out_longitude
+          ? '<br><a href="https://maps.google.com/?q=' + r.sign_out_latitude + ',' + r.sign_out_longitude +
+            '" target="_blank" rel="noopener" style="color:#1F5940;font-weight:600;">Sign-out map ↗</a>'
+          : '')
+      : '';
+
+    return (
+      '<b>' + escapeHtml(r.nurse_name) + '</b> (' + escapeHtml(r.employee_id || '') + ')' +
+      statusBadge + punctBadge + '<br>' +
+      escapeHtml(r.care_centre) + ' · ' + escapeHtml(r.emp_type || '—') + '<br>' +
+      'Shift: ' + escapeHtml(r.duty_type || '—') + '<br>' +
+      'Patient: ' + escapeHtml(r.patient_name || 'N/A') + '<br>' +
+      signInLine + signOutLine +
+      photoHtml
+    );
+  }
+
+  function formatDateTime(iso){
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) +
+      ' ' + d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+  }
+
+  // ── Draw filtered records ────────────────────────────────
   function clearMarkers(){
     markers.forEach(m => map.removeLayer(m));
     markers = [];
@@ -205,58 +319,70 @@
 
   function plotRecords(records){
     clearMarkers();
-    const centreSet = new Set();
-    const valid = [];
+    const noResultsEl = document.getElementById('noResults');
 
-    records.forEach(r => {
-      // Check if coordinates exist and are valid numbers
-      if (typeof r.latitude !== 'number' || typeof r.longitude !== 'number') {
-        console.warn('Skipping row missing lat/lng:', r.nurse_name);
-        return;
-      }
-      valid.push(r);
+    const valid = records.filter(r =>
+      typeof r.latitude === 'number' && typeof r.longitude === 'number'
+    );
+
+    if (valid.length === 0) {
+      noResultsEl.classList.add('visible');
+    } else {
+      noResultsEl.classList.remove('visible');
+    }
+
+    const centreSet = new Set();
+    let inCount = 0, outCount = 0;
+
+    valid.forEach(r => {
       centreSet.add(r.care_centre);
+      if (isSignedOut(r)) outCount++; else inCount++;
 
       const marker = L.marker([r.latitude, r.longitude], { icon: buildMarkerIcon(r) }).addTo(map);
-
-      const badge = r.punctuality === 'Late'
-        ? '<span class="popup-badge late">Late</span>'
-        : (r.punctuality === 'On Time' ? '<span class="popup-badge ontime">On Time</span>' : '');
-
-      const photoHtml = r.photo_base64
-        ? '<img src="' + escapeHtml(r.photo_base64) + '" alt="Check-in photo" class="popup-photo">'
-        : '';
-
-      marker.bindPopup(
-        '<b>' + escapeHtml(r.nurse_name) + '</b> (' + escapeHtml(r.employee_id || '') + ')' + badge + '<br>' +
-        escapeHtml(r.care_centre) + ' · ' + escapeHtml(r.emp_type || '—') + '<br>' +
-        'Shift: ' + escapeHtml(r.duty_type) + '<br>' +
-        'Patient: ' + escapeHtml(r.patient_name || 'N/A') + '<br>' +
-        'Location: ' + escapeHtml(r.location_text || '—') + '<br>' +
-        escapeHtml(r.duty_date) + ' ' + escapeHtml(r.duty_time) +
-        photoHtml
-      );
+      marker.bindPopup(buildPopupHtml(r));
       markers.push(marker);
     });
 
-    // If we have valid coordinates, zoom to fit them all
     if (valid.length > 0) {
       const bounds = L.latLngBounds(valid.map(r => [r.latitude, r.longitude]));
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+      // If only one point, zoom to it manually rather than fit a 0-size bounds
+      if (valid.length === 1) {
+        map.setView([valid[0].latitude, valid[0].longitude], 14);
+      } else {
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+      }
     } else {
-      // If no valid coordinates, stay at the default view
       map.setView([20.5937, 78.9629], 5);
     }
 
     document.getElementById('countBadge').textContent =
-      valid.length + ' check-in' + (valid.length === 1 ? '' : 's') + ' shown — ' +
-      centreSet.size + ' care centre' + (centreSet.size === 1 ? '' : 's');
+      valid.length + ' shown · ' + inCount + ' in · ' + outCount + ' out · ' +
+      centreSet.size + ' centre' + (centreSet.size === 1 ? '' : 's');
   }
 
-  function escapeHtml(str){
-    return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // ── Client-side filter (search + status) ────────────────
+  function applyFilters(){
+    const q      = document.getElementById('searchBox').value.trim().toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+
+    const clearBtn = document.getElementById('searchClear');
+    clearBtn.classList.toggle('visible', q.length > 0);
+
+    let filtered = allRecords;
+
+    if (q) {
+      filtered = filtered.filter(r =>
+        String(r.employee_id || '').toLowerCase().includes(q) ||
+        String(r.nurse_name  || '').toLowerCase().includes(q)
+      );
+    }
+    if (status === 'in')  filtered = filtered.filter(r => !isSignedOut(r));
+    if (status === 'out') filtered = filtered.filter(r =>  isSignedOut(r));
+
+    plotRecords(filtered);
   }
 
+  // ── Fetch from Supabase ──────────────────────────────────
   async function loadData(){
     const start    = document.getElementById('startDate').value;
     const end      = document.getElementById('endDate').value;
@@ -271,10 +397,10 @@
     let url = SUPABASE_URL + '/rest/v1/attendance'
             + '?select=submission_id,nurse_name,employee_id,emp_type,care_centre,'
             + 'duty_date,duty_time,duty_type,patient_name,location_text,'
-            + 'latitude,longitude,punctuality,submitted_at,photo_base64'
+            + 'latitude,longitude,punctuality,submitted_at,photo_base64,'
+            + 'sign_out_at,sign_out_location,sign_out_latitude,sign_out_longitude'
             + '&order=submitted_at.desc';
 
-    // Only apply date filter if dates are selected
     if (start && end) {
       url += '&duty_date=gte.' + encodeURIComponent(start)
            + '&duty_date=lte.' + encodeURIComponent(end);
@@ -297,8 +423,8 @@
         return;
       }
 
-      const data = await res.json();
-      plotRecords(data || []);
+      allRecords = await res.json();
+      applyFilters();
     } catch (err) {
       alert('Could not load attendance. Check your connection and try again.');
     } finally {
@@ -306,16 +432,30 @@
     }
   }
 
+  // ── Wire up controls ─────────────────────────────────────
   document.getElementById('loadBtn').addEventListener('click', loadData);
 
-  // Default date range to last 30 days
-  const dEnd = new Date();
+  document.getElementById('searchBox').addEventListener('input', applyFilters);
+  document.getElementById('searchClear').addEventListener('click', () => {
+    const box = document.getElementById('searchBox');
+    box.value = '';
+    box.focus();
+    applyFilters();
+  });
+  document.getElementById('statusFilter').addEventListener('change', applyFilters);
+
+  // Also live-filter on the other dropdowns after first load — no extra network call
+  ['centreFilter','empTypeFilter','dutyTypeFilter'].forEach(id => {
+    document.getElementById(id).addEventListener('change', loadData);
+  });
+
+  // Default date range: last 30 days
+  const dEnd   = new Date();
   const dStart = new Date(Date.now() - 30 * 24 * 3600 * 1000);
   const fmt = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   document.getElementById('startDate').value = fmt(dStart);
-  document.getElementById('endDate').value = fmt(dEnd);
+  document.getElementById('endDate').value   = fmt(dEnd);
 
-  // Initial Load
   loadData();
 </script>
 </body>
