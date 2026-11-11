@@ -11,6 +11,7 @@
     --pulse:#2F7A5C; --pulse-deep:#1B4C37; --pulse-soft:#EAF3EF;
     --line:#D8E0DD; --muted:#6A7A82; --danger:#B23A2E;
     --danger-soft:#FBEAE7; --radius:16px; --radius-sm:10px;
+    --green:#2F7A5C; --green-bright:#3DCB82; --red:#D14A3C;
     --font-mono:ui-monospace,'SF Mono','Roboto Mono','Courier New',monospace;
   }
   *{box-sizing:border-box;}
@@ -20,21 +21,6 @@
     font-size:15px; line-height:1.5; background:var(--paper); color:var(--ink);
     display:flex; flex-direction:column; min-height:100vh;
   }
-
-  /* ── Debug banner ─────────────────── */
-  .debug{
-    background:#0F1620; color:#C9D6E0; font-family:var(--font-mono);
-    font-size:11.5px; line-height:1.7; padding:10px 16px;
-    max-height:180px; overflow-y:auto; flex-shrink:0;
-    border-bottom:2px solid var(--pulse);
-  }
-  .debug.hidden{ display:none; }
-  .debug .row{ display:flex; gap:8px; }
-  .debug .tag{ flex-shrink:0; padding:0 6px; border-radius:4px; font-weight:700; }
-  .debug .tag.ok  { background:#1B4C37; color:#8EE7B5; }
-  .debug .tag.err { background:#5A1F1A; color:#FF9E8F; }
-  .debug .tag.info{ background:#25384D; color:#9EC3E8; }
-  .debug .msg{ white-space:pre-wrap; word-break:break-word; }
 
   /* ── Toolbar ─────────────────────── */
   .toolbar{
@@ -51,9 +37,7 @@
   .brand .divider{ width:1px; height:32px; background:rgba(255,255,255,0.35); }
   .brand h1{ margin:0; font-size:17px; font-weight:700; letter-spacing:-0.015em; line-height:1.15; }
   .brand .sub{ font-size:11.5px; opacity:0.85; font-family:var(--font-mono); }
-
   .toolbar .spacer{ flex:1; }
-
   .filters{ display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; }
   .filters label{
     font-size:11px; font-weight:700; opacity:0.9; letter-spacing:0.05em;
@@ -67,29 +51,27 @@
   .filters input::placeholder{ color:rgba(255,255,255,0.65); }
   .filters select option{ color:var(--ink); background:#fff; }
   .filters input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(1); cursor:pointer; }
-  .filters input:focus, .filters select:focus{ outline:2px solid rgba(255,255,255,0.6); }
   .toolbar button{
     padding:9px 18px; border:none; border-radius:9px; background:#fff;
     color:var(--pulse-deep); font-weight:700; font-size:13.5px; cursor:pointer;
     transition:transform .1s, filter .15s; min-height:36px;
   }
   .toolbar button:hover{ filter:brightness(0.95); }
-  .toolbar button:active{ transform:scale(0.97); }
-  .toolbar button:disabled{ opacity:0.5; cursor:not-allowed; }
 
-  /* ── Layout ─────────────────────── */
+  /* ── Layout ──────────────────────── */
   .main{ flex:1; display:flex; min-height:0; }
   #map{ flex:1; min-height:400px; background:#dde5e2; }
   .sidebar{
-    width:360px; flex-shrink:0; background:var(--card);
+    width:380px; flex-shrink:0; background:var(--card);
     border-left:1px solid var(--line); display:flex; flex-direction:column;
-    overflow:hidden;
+    overflow:hidden; position:relative;
   }
   .sidebar-header{
     padding:12px 18px; border-bottom:1px solid var(--line);
     font-size:12px; font-weight:700; letter-spacing:0.08em;
     text-transform:uppercase; color:var(--pulse-deep);
     display:flex; justify-content:space-between; align-items:center;
+    flex-shrink:0;
   }
   .sidebar-header .count{
     background:var(--pulse-soft); color:var(--pulse-deep);
@@ -119,10 +101,24 @@
     font-size:16px;
   }
   .item .info{ flex:1; min-width:0; }
-  .item .name{
-    font-weight:700; font-size:13.5px; line-height:1.3;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  /* Name row: name + staff type side-by-side */
+  .item .name-row{
+    display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+    line-height:1.3;
   }
+  .item .name{
+    font-weight:700; font-size:13.5px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    max-width:100%;
+  }
+  .item .staff-type{
+    font-size:9.5px; font-weight:800; padding:1px 7px; border-radius:20px;
+    letter-spacing:0.05em; text-transform:uppercase;
+    background:#F0F1F4; color:#4A5568; flex-shrink:0;
+  }
+  .item .staff-type.onroll{ background:#E6F0EA; color:#1B4C37; }
+  .item .staff-type.aen   { background:#EDE9F7; color:#4B3B7A; }
+  .item .staff-type.agency{ background:#FDF3E0; color:#8A5A1F; }
   .item .meta{
     font-size:11.5px; color:var(--muted); margin-top:2px;
     font-family:var(--font-mono);
@@ -141,56 +137,95 @@
   .pill.in{ background:#E6F0EA; color:#1B4C37; }
   .pill.out{ background:#E8EEF6; color:#2E4A6E; }
   .pill.dur{ background:#FDF3E0; color:#8A5A1F; }
+  .pill.dist{ background:#EDE9F7; color:#4B3B7A; }
   .pill.miss{ background:var(--danger-soft); color:var(--danger); }
-  .pill.type{ background:#F0F1F4; color:#4A5568; text-transform:uppercase; }
-  .pill.date{ background:#EDE9F7; color:#4B3B7A; }
+  .pill.date{ background:#F0F1F4; color:#4A5568; }
 
-  /* ── Detail panel ───────────────── */
-  .detail{
-    position:fixed; bottom:0; left:0; right:0; z-index:900;
-    background:#fff; border-radius:20px 20px 0 0;
-    box-shadow:0 -10px 40px -12px rgba(20,28,43,0.35);
-    transform:translateY(100%); transition:transform .3s ease;
-    max-height:82vh; overflow-y:auto; max-width:620px; margin:0 auto;
+  /* ── Detail view (inside sidebar) ─ */
+  .detail-view{
+    position:absolute; inset:0; background:#fff;
+    display:flex; flex-direction:column;
+    transform:translateX(100%); transition:transform .28s ease;
+    z-index:5;
   }
-  .detail.open{ transform:translateY(0); }
-  .detail .drag-bar{ width:44px; height:4px; border-radius:2px; background:var(--line); margin:10px auto 0; }
-  .detail .d-head{ display:flex; gap:16px; padding:16px 20px 8px; align-items:center; }
-  .detail .d-head img{
-    width:84px; height:84px; border-radius:12px; object-fit:cover;
+  .detail-view.open{ transform:translateX(0); }
+  .detail-head{
+    display:flex; align-items:center; gap:10px;
+    padding:12px 14px; border-bottom:1px solid var(--line);
+    flex-shrink:0; background:linear-gradient(135deg,#F3F8F5,#EAF3EF);
+  }
+  .back-btn{
+    display:flex; align-items:center; gap:6px;
+    background:#fff; border:1px solid var(--line); border-radius:9px;
+    padding:7px 12px; font-size:12.5px; font-weight:700;
+    color:var(--pulse-deep); cursor:pointer; font-family:inherit;
+    flex-shrink:0;
+  }
+  .back-btn:hover{ background:#F6F9F8; }
+  .back-btn svg{ width:14px; height:14px; }
+  .detail-head .title{
+    font-size:13px; font-weight:700; color:var(--pulse-deep);
+    letter-spacing:0.06em; text-transform:uppercase;
+  }
+  .detail-body{ flex:1; overflow-y:auto; padding:16px; }
+  .detail-body::-webkit-scrollbar{ width:6px; }
+  .detail-body::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+
+  .d-profile{ display:flex; gap:14px; align-items:center; margin-bottom:18px; }
+  .d-profile img{
+    width:80px; height:80px; border-radius:12px; object-fit:cover;
     border:1px solid var(--line); flex-shrink:0; background:#eee; cursor:zoom-in;
   }
-  .detail .d-head .avatar{
-    width:84px; height:84px; border-radius:12px;
+  .d-profile .avatar{
+    width:80px; height:80px; border-radius:12px;
     display:flex; align-items:center; justify-content:center;
     background:linear-gradient(135deg,var(--pulse-deep),var(--pulse));
     color:#fff; font-weight:700; font-size:26px; flex-shrink:0;
   }
-  .detail .d-head h2{ margin:0; font-size:18px; font-weight:700; line-height:1.25; }
-  .detail .d-head .d-sub{ font-size:12.5px; color:var(--muted); margin-top:4px; font-family:var(--font-mono); }
-  .detail .d-head .type-badge{
-    display:inline-block; margin-top:6px; font-size:10.5px;
-    font-weight:700; padding:2px 9px; border-radius:20px;
-    background:#F0F1F4; color:#4A5568; text-transform:uppercase; letter-spacing:0.04em;
+  .d-profile .d-name-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .d-profile h2{ margin:0; font-size:17px; font-weight:700; line-height:1.25; }
+  .d-profile .d-sub{ font-size:12px; color:var(--muted); margin-top:3px; font-family:var(--font-mono); }
+
+  .d-section{
+    background:#F6F9F8; border:1px solid var(--line);
+    border-radius:12px; padding:12px 14px; margin-bottom:14px;
   }
-  .detail .d-body{ padding:10px 20px 26px; }
-  .detail .d-row{
-    display:flex; justify-content:space-between; gap:14px; padding:10px 0;
-    border-bottom:1px solid #E7ECEA; font-size:13.5px;
+  .d-section h3{
+    margin:0 0 10px; font-size:11px; font-weight:800;
+    letter-spacing:0.08em; text-transform:uppercase; color:var(--pulse-deep);
+    display:flex; align-items:center; gap:6px;
   }
-  .detail .d-row:last-child{ border-bottom:none; }
-  .detail .d-row .k{ color:var(--muted); font-weight:600; flex-shrink:0; }
-  .detail .d-row .v{ text-align:right; word-break:break-word; }
-  .detail .d-row .v a{ color:var(--pulse-deep); font-weight:700; }
-  .detail .close-detail{
-    position:absolute; top:12px; right:14px; background:none; border:none;
-    font-size:24px; color:var(--muted); cursor:pointer; line-height:1; padding:4px 8px;
+  .d-section h3 .dot{
+    width:8px; height:8px; border-radius:50%;
   }
-  .detail-backdrop{
-    position:fixed; inset:0; background:rgba(20,28,43,0.25); z-index:850;
-    opacity:0; pointer-events:none; transition:opacity .3s;
+  .d-section h3 .dot.in{ background:var(--green-bright); box-shadow:0 0 0 3px rgba(61,203,130,0.25); }
+  .d-section h3 .dot.out{ background:var(--green); }
+  .d-section h3 .dot.miss{ background:var(--red); }
+
+  .d-row{
+    display:flex; justify-content:space-between; gap:12px;
+    padding:7px 0; font-size:13px;
+    border-bottom:1px dashed #E7ECEA;
   }
-  .detail-backdrop.show{ opacity:1; pointer-events:auto; }
+  .d-row:last-child{ border-bottom:none; }
+  .d-row .k{ color:var(--muted); font-weight:600; flex-shrink:0; }
+  .d-row .v{ text-align:right; word-break:break-word; font-family:var(--font-mono); font-size:12px; }
+  .d-row .v a{ color:var(--pulse-deep); font-weight:700; }
+
+  .distance-banner{
+    display:flex; align-items:center; justify-content:space-between;
+    background:linear-gradient(135deg,#EDE9F7,#E2DBF0);
+    border:1px solid #C9BEE0; border-radius:12px;
+    padding:12px 16px; margin-bottom:14px;
+  }
+  .distance-banner .label{
+    font-size:11px; font-weight:800; letter-spacing:0.08em;
+    text-transform:uppercase; color:#4B3B7A;
+  }
+  .distance-banner .value{
+    font-size:18px; font-weight:800; color:#4B3B7A;
+    font-family:var(--font-mono); letter-spacing:-0.01em;
+  }
 
   /* ── States ─────────────────────── */
   .state-msg{ padding:40px 24px; text-align:center; color:var(--muted); font-size:14px; }
@@ -206,13 +241,13 @@
     border-radius:9px; margin:12px; line-height:1.6;
   }
   .errmsg code{ background:rgba(0,0,0,0.06); padding:1px 5px; border-radius:4px; font-size:12px; }
-  .errmsg ol{ margin:6px 0 0; padding-left:20px; }
 
-  /* ── Map markers ────────────────── */
+  /* ── Map markers ───────────────── */
   .map-pin{
     width:46px; height:46px; border-radius:50%; overflow:hidden;
     border:3px solid #fff; box-shadow:0 3px 10px rgba(20,28,43,0.4);
     background:#ddd; cursor:pointer; transition:transform .15s;
+    position:relative;
   }
   .map-pin:hover{ transform:scale(1.1); }
   .map-pin img{ width:100%; height:100%; object-fit:cover; display:block; }
@@ -222,11 +257,38 @@
     background:linear-gradient(135deg,var(--pulse-deep),var(--pulse));
     font-size:15px;
   }
-  .map-pin.selected{
-    border-color:var(--pulse);
-    box-shadow:0 0 0 4px rgba(47,122,92,0.3),0 3px 10px rgba(20,28,43,0.4);
-  }
 
+  /* Signed in — open: green ring + blinking */
+  .map-pin.state-in{
+    border-color:var(--green-bright);
+    animation:blinkGreen 1.4s ease-in-out infinite;
+  }
+  @keyframes blinkGreen{
+    0%,100%{ box-shadow:0 0 0 0 rgba(61,203,130,0.55), 0 3px 10px rgba(20,28,43,0.4); }
+    50%    { box-shadow:0 0 0 10px rgba(61,203,130,0),   0 3px 10px rgba(20,28,43,0.4); }
+  }
+  /* Signed out: solid green ring */
+  .map-pin.state-out{ border-color:var(--green); }
+  /* Missing sign-out: red ring */
+  .map-pin.state-miss{ border-color:var(--red); }
+
+  .map-pin.selected{ transform:scale(1.15); z-index:999; }
+
+  /* Smaller secondary markers for sign-in/out when row selected */
+  .map-pin.mini{
+    width:30px; height:30px; border-width:2px;
+  }
+  .map-pin.mini.no-photo{ font-size:10px; }
+
+  .leaflet-tooltip.dist-tip{
+    background:#4B3B7A; color:#fff; border:none;
+    font-family:var(--font-mono); font-size:11px; font-weight:700;
+    padding:4px 9px; border-radius:20px;
+    box-shadow:0 3px 10px rgba(75,59,122,0.4);
+  }
+  .leaflet-tooltip.dist-tip::before{ border-top-color:#4B3B7A; }
+
+  /* ── Lightbox ─────────────────── */
   .lightbox{
     position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.9);
     display:none; align-items:center; justify-content:center; padding:20px;
@@ -250,18 +312,15 @@
     .main{ flex-direction:column; }
     #map{ min-height:260px; flex:0 0 42vh; }
     .sidebar{ width:100%; flex:1; border-left:none; border-top:1px solid var(--line); }
-    .detail{ max-width:100%; border-radius:16px 16px 0 0; }
+    .detail-view{ border-radius:0; }
   }
 </style>
 </head>
 <body>
 
-<!-- DEBUG BANNER — shows what's happening live -->
-<div class="debug" id="debug"></div>
-
 <div class="toolbar">
   <div class="brand">
-    <img class="logo" id="brandLogo" src="" alt="Logo">
+    <img class="logo" id="brandLogo" src="" alt="Apollo Home Care">
     <div class="divider"></div>
     <div>
       <h1>Attendance Map</h1>
@@ -269,7 +328,6 @@
     </div>
   </div>
   <div class="spacer"></div>
-
   <div class="filters">
     <label>From <input type="date" id="dateFrom"></label>
     <label>To <input type="date" id="dateTo"></label>
@@ -293,13 +351,12 @@
     </label>
     <label>Employee ID <input type="text" id="empIdSearch" placeholder="Search ID…" autocomplete="off" translate="no"></label>
     <button type="button" id="refreshBtn">Refresh</button>
-    <button type="button" id="debugToggle" style="background:rgba(255,255,255,0.2);color:#fff;">Hide debug</button>
   </div>
 </div>
 
 <div class="main">
   <div id="map"></div>
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <span>Punches</span>
       <span class="count" id="punchCount">—</span>
@@ -307,14 +364,19 @@
     <div class="list" id="list">
       <div class="state-msg"><div class="spinner"></div>Loading attendance…</div>
     </div>
-  </div>
-</div>
 
-<div class="detail-backdrop" id="detailBackdrop"></div>
-<div class="detail" id="detailPanel">
-  <button type="button" class="close-detail" id="closeDetail" aria-label="Close">&times;</button>
-  <div class="drag-bar"></div>
-  <div id="detailContent"></div>
+    <!-- Detail panel slides in from right inside the sidebar -->
+    <div class="detail-view" id="detailView">
+      <div class="detail-head">
+        <button type="button" class="back-btn" id="backBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
+        <span class="title">Attendance Detail</span>
+      </div>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+  </div>
 </div>
 
 <div class="lightbox" id="lightbox">
@@ -324,57 +386,26 @@
 
 <script>
   /* ============================================================
-     CONFIG — set these
+     CONFIG
      ============================================================ */
   const SUPABASE_URL      = 'https://pdgxpgvwgnptxdvffgos.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkZ3hwZ3Z3Z25wdHhkdmZmZ29zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwODE4NzQsImV4cCI6MjEwODY1Nzg3NH0.MT7IQIbwfLumBoUQ3PaXipoJti14z10rz8NBzqMMASo';
 
   const TABLE = 'attendance';
 
-  /* Try multiple logo URLs in order; first one that loads wins.
-     Replace each one with your real GitHub raw URL. */
-  const LOGO_URLS = [
-    'https://cdn.jsdelivr.net/gh/YOUR_GITHUB_USER/YOUR_REPO@main/logo.png',
-    'https://raw.githubusercontent.com/YOUR_GITHUB_USER/YOUR_REPO/main/logo.png',
-    ''  // empty = skip
-  ];
+  /* Logo — same folder as this HTML */
+  const LOGO_URL = 'logo.png';
 
-  /* If you know your date column, set it. Leave blank to auto-detect among
-     duty_date → date → sign_in_at → created_at → timestamp. */
+  /* Optional: set if you want to force a date column. Blank = auto-detect. */
   const DATE_COLUMN_OVERRIDE = '';
-
-  /* Candidate date columns the code will auto-detect */
   const DATE_COLUMN_CANDIDATES = ['duty_date', 'date', 'sign_in_at', 'created_at', 'timestamp'];
-
-  /* ============================================================
-     Debug logger — writes to the black banner at the top
-     ============================================================ */
-  const debugEl = document.getElementById('debug');
-  function log(level, ...parts){
-    console.log('[' + level + ']', ...parts);
-    const row = document.createElement('div');
-    row.className = 'row';
-    const tag = document.createElement('span');
-    tag.className = 'tag ' + (level === 'ok' ? 'ok' : level === 'err' ? 'err' : 'info');
-    tag.textContent = level.toUpperCase();
-    const msg = document.createElement('span');
-    msg.className = 'msg';
-    msg.textContent = parts.map(p => typeof p === 'string' ? p : JSON.stringify(p)).join(' ');
-    row.appendChild(tag); row.appendChild(msg);
-    debugEl.appendChild(row);
-    debugEl.scrollTop = debugEl.scrollHeight;
-  }
-
-  document.getElementById('debugToggle').addEventListener('click', (e) => {
-    debugEl.classList.toggle('hidden');
-    e.target.textContent = debugEl.classList.contains('hidden') ? 'Show debug' : 'Hide debug';
-  });
 
   /* ============================================================
      State
      ============================================================ */
   let map = null;
   let markers = [];
+  let selectedOverlay = [];   // extra markers + polyline for selected row
   let allRows = [];
   let filteredRows = [];
   let mapReady = false;
@@ -390,47 +421,17 @@
   const refreshBtn      = document.getElementById('refreshBtn');
   const listEl          = document.getElementById('list');
   const punchCountEl    = document.getElementById('punchCount');
-  const detailPanel     = document.getElementById('detailPanel');
-  const detailContent   = document.getElementById('detailContent');
-  const detailBackdrop  = document.getElementById('detailBackdrop');
-  const closeDetail     = document.getElementById('closeDetail');
+  const detailView      = document.getElementById('detailView');
+  const detailBody      = document.getElementById('detailBody');
+  const backBtn         = document.getElementById('backBtn');
   const lightbox        = document.getElementById('lightbox');
   const lightboxImg     = document.getElementById('lightboxImg');
   const closeLightbox   = document.getElementById('closeLightbox');
   const brandLogo       = document.getElementById('brandLogo');
 
-  /* ── Load logo with multi-URL fallback + debug reporting ── */
-  (function loadLogo(){
-    const urls = LOGO_URLS.filter(u => u && u.trim());
-    if (!urls.length){
-      log('err', 'No LOGO_URLS configured — replace YOUR_GITHUB_USER / YOUR_REPO in the script.');
-      brandLogo.style.display = 'none';
-      return;
-    }
-    let i = 0;
-    function tryNext(){
-      if (i >= urls.length){
-        log('err', 'All logo URLs failed. See Network tab. Last tried:', urls[urls.length-1]);
-        brandLogo.style.display = 'none';
-        return;
-      }
-      const url = urls[i++];
-      log('info', 'Trying logo:', url);
-      const probe = new Image();
-      probe.crossOrigin = 'anonymous';
-      probe.onload = () => {
-        brandLogo.src = url;
-        brandLogo.style.display = '';
-        log('ok', 'Logo loaded:', url, '(' + probe.naturalWidth + '×' + probe.naturalHeight + ')');
-      };
-      probe.onerror = () => {
-        log('err', 'Logo URL failed:', url);
-        tryNext();
-      };
-      probe.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
-    }
-    tryNext();
-  })();
+  /* ── Logo ── */
+  brandLogo.src = LOGO_URL;
+  brandLogo.onerror = () => { brandLogo.style.display = 'none'; };
 
   function localDateStr(d){
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -483,117 +484,114 @@
     return isFinite(ms) && ms >= 0 ? ms : null;
   }
 
+  /* Haversine distance in meters */
+  function haversineMeters(lat1, lon1, lat2, lon2){
+    const R = 6371000;
+    const toRad = d => d * Math.PI / 180;
+    const φ1 = toRad(lat1), φ2 = toRad(lat2);
+    const Δφ = toRad(lat2 - lat1);
+    const Δλ = toRad(lon2 - lon1);
+    const a = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+  function fmtDistance(m){
+    if (m == null || !isFinite(m)) return null;
+    if (m < 1000) return Math.round(m) + ' m';
+    return (m / 1000).toFixed(m < 10000 ? 2 : 1) + ' km';
+  }
+  /* Distance between sign-in and sign-out locations of a row (null if sign-out missing or coords missing) */
+  function rowDistance(row){
+    if (row.sign_out_at == null) return null;
+    /* Sign-out coords — try several common column name patterns */
+    const outLat = row.sign_out_latitude ?? row.signout_latitude ?? row.out_latitude ?? row.latitude_out ?? null;
+    const outLng = row.sign_out_longitude ?? row.signout_longitude ?? row.out_longitude ?? row.longitude_out ?? null;
+    if (outLat == null || outLng == null) return null;
+    if (row.latitude == null || row.longitude == null) return null;
+    return haversineMeters(
+      Number(row.latitude), Number(row.longitude),
+      Number(outLat), Number(outLng)
+    );
+  }
+  /* Sign-out coords for selected row */
+  function outCoordsOf(row){
+    const outLat = row.sign_out_latitude ?? row.signout_latitude ?? row.out_latitude ?? row.latitude_out ?? null;
+    const outLng = row.sign_out_longitude ?? row.signout_longitude ?? row.out_longitude ?? row.longitude_out ?? null;
+    if (outLat == null || outLng == null) return null;
+    return { lat: Number(outLat), lng: Number(outLng) };
+  }
+  function statusOf(row){
+    if (!row.sign_out_at) return 'in';
+    return 'out';
+  }
+  function statusClass(row){
+    /* Per user spec: signed in = green blinking, signed out = full green, missed sign-out = red.
+       "Missed sign-out" = shift where sign_out_at is null. But note: this overlaps with "signed in (open)".
+       We treat: sign_out_at present = signed out (green), null = missed/red. To also show "in-progress blink"
+       when sign_in is today and no sign_out yet, we mark those with state-in. */
+    if (!row.sign_out_at) {
+      /* Is this "currently signed in" or "missed sign-out"? Differentiate by date:
+         if sign_in is today → open (blinking green); else → missed (red). */
+      const signInDay = row.sign_in_at ? localDateStr(new Date(row.sign_in_at)) : null;
+      const today = localDateStr(new Date());
+      return signInDay === today ? 'in' : 'miss';
+    }
+    return 'out';
+  }
+
   /* ============================================================
-     Raw REST wrapper — logs each request/response
+     REST wrapper
      ============================================================ */
   async function restGet(path){
-    const full = SUPABASE_URL + path;
-    log('info', 'GET', path);
-    const t0 = performance.now();
-    let res;
-    try {
-      res = await fetch(full, {
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-          'Accept': 'application/json',
-          'Prefer': 'count=exact'
-        }
-      });
-    } catch (netErr){
-      log('err', 'Network error:', netErr.message);
-      throw netErr;
-    }
-    const ms = Math.round(performance.now() - t0);
+    const res = await fetch(SUPABASE_URL + path, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'Accept': 'application/json'
+      }
+    });
     const text = await res.text();
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
-
-    const countHeader = res.headers.get('content-range');
     if (!res.ok){
       const msg = (data && (data.message || data.hint || data.error)) || ('HTTP ' + res.status);
-      log('err', 'HTTP', res.status, 'in', ms + 'ms →', msg);
       const err = new Error(msg); err.status = res.status; throw err;
     }
-    const n = Array.isArray(data) ? data.length : 0;
-    log('ok', 'HTTP', res.status, 'in', ms + 'ms →', n, 'row(s)', countHeader ? '[' + countHeader + ']' : '');
     return data;
   }
 
-  /* ============================================================
-     Auto-detect date column by probing one row
-     ============================================================ */
   async function detectDateColumn(){
-    if (DATE_COLUMN_OVERRIDE){
-      detectedDateColumn = DATE_COLUMN_OVERRIDE;
-      log('ok', 'Date column (override):', detectedDateColumn);
-      return detectedDateColumn;
-    }
-    /* Probe with a single row to inspect columns */
-    let probeRows;
-    try {
-      probeRows = await restGet('/rest/v1/' + TABLE + '?select=*&limit=1');
-    } catch (e){
-      log('err', 'Probe failed — cannot read ' + TABLE + '. See RLS check below.');
-      throw e;
-    }
-    if (!Array.isArray(probeRows) || !probeRows.length){
-      log('err', 'Table ' + TABLE + ' returned 0 rows. It exists and RLS allows SELECT, but there is no data.');
-      throw new Error('Table is empty. Submit at least one attendance to test.');
-    }
-    const cols = Object.keys(probeRows[0]);
-    log('ok', 'Table columns:', cols.join(', '));
-
+    if (DATE_COLUMN_OVERRIDE){ detectedDateColumn = DATE_COLUMN_OVERRIDE; return detectedDateColumn; }
+    const probe = await restGet('/rest/v1/' + TABLE + '?select=*&limit=1');
+    if (!Array.isArray(probe) || !probe.length) throw new Error('Table is empty.');
+    const cols = Object.keys(probe[0]);
     for (const cand of DATE_COLUMN_CANDIDATES){
-      if (cols.includes(cand)){
-        detectedDateColumn = cand;
-        log('ok', 'Auto-detected date column:', cand, '(value sample:', String(probeRows[0][cand]), ')');
-        return cand;
-      }
+      if (cols.includes(cand)){ detectedDateColumn = cand; return cand; }
     }
-    log('err', 'No date column found. Expected one of:', DATE_COLUMN_CANDIDATES.join(', '));
     throw new Error('No usable date column in ' + TABLE);
   }
 
-  /* ============================================================
-     Fetch with the detected date column
-     ============================================================ */
   async function fetchAttendance(fromStr, toStr){
-    if (!detectedDateColumn){
-      await detectDateColumn();
-    }
+    if (!detectedDateColumn) await detectDateColumn();
     const col = detectedDateColumn;
-    let path, rows;
-
-    /* For `date` columns: direct gte/lte strings work perfectly */
     if (col === 'duty_date' || col === 'date'){
-      path = '/rest/v1/' + TABLE +
+      return await restGet('/rest/v1/' + TABLE +
         '?select=*' +
         '&' + col + '=gte.' + encodeURIComponent(fromStr) +
         '&' + col + '=lte.' + encodeURIComponent(toStr) +
-        '&order=' + col + '.desc';
-      rows = await restGet(path);
-      return Array.isArray(rows) ? rows : [];
+        '&order=' + col + '.desc') || [];
     }
-
-    /* For timestamp columns: widen ±1 day then re-filter by local date */
     const from = new Date(fromStr + 'T00:00:00'); from.setDate(from.getDate() - 1);
     const to   = new Date(toStr   + 'T23:59:59.999'); to.setDate(to.getDate() + 1);
-    path = '/rest/v1/' + TABLE +
+    const rows = await restGet('/rest/v1/' + TABLE +
       '?select=*' +
       '&' + col + '=gte.' + encodeURIComponent(from.toISOString()) +
       '&' + col + '=lte.' + encodeURIComponent(to.toISOString()) +
-      '&order=' + col + '.desc';
-    rows = await restGet(path);
-    const before = rows.length;
-    rows = rows.filter(r => {
-      const raw = r[col];
-      if (!raw) return true;
+      '&order=' + col + '.desc') || [];
+    return rows.filter(r => {
+      const raw = r[col]; if (!raw) return true;
       const local = localDateStr(new Date(raw));
       return local >= fromStr && local <= toStr;
     });
-    log('info', 'Local-date re-filter:', before, '→', rows.length);
-    return rows;
   }
 
   /* ============================================================
@@ -603,24 +601,28 @@
     const type   = staffTypeFilter.value;
     const status = statusFilter.value;
     const idQ    = empIdSearch.value.trim().toLowerCase();
-
     filteredRows = allRows.filter(r => {
       if (type && String(r.emp_type || '').toLowerCase() !== type.toLowerCase()) return false;
       if (status === 'in'  && r.sign_out_at) return false;
       if (status === 'out' && !r.sign_out_at) return false;
-      if (idQ) {
+      if (status === 'missing'){
+        if (r.sign_out_at) return false;
+        /* Same local-day check as statusClass */
+        const day = r.sign_in_at ? localDateStr(new Date(r.sign_in_at)) : null;
+        if (day === localDateStr(new Date())) return false;
+      }
+      if (idQ){
         const hay = (String(r.employee_id || '') + ' ' + String(r.nurse_name || '')).toLowerCase();
         if (!hay.includes(idQ)) return false;
       }
       return true;
     });
-
     renderList();
     plotAll();
   }
 
   /* ============================================================
-     Map bootstrap
+     Map
      ============================================================ */
   function loadScript(src){
     return new Promise((resolve, reject) => {
@@ -632,33 +634,32 @@
   }
 
   async function initMap(){
-    log('info', 'Initialising map (Leaflet / OpenStreetMap)…');
-    try {
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-      await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
-      L = window.L;
-      if (!L) throw new Error('Leaflet global not defined');
-      map = L.map('map', { zoomControl: true }).setView([20.5937, 78.9629], 5);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
-      mapReady = true;
-      log('ok', 'Map ready');
-    } catch (e) {
-      log('err', 'Map init failed:', e.message);
-    }
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+    await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+    L = window.L;
+    map = L.map('map', { zoomControl: true }).setView([20.5937, 78.9629], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    mapReady = true;
   }
 
-  /* ============================================================
-     Markers
-     ============================================================ */
   function clearMarkers(){
     if (L && map) markers.forEach(m => map.removeLayer(m));
     markers = [];
+  }
+  function clearSelectedOverlay(){
+    if (L && map){
+      selectedOverlay.forEach(item => {
+        if (item.remove) item.remove();
+        else if (map.removeLayer) map.removeLayer(item);
+      });
+    }
+    selectedOverlay = [];
   }
 
   function plotAll(){
@@ -668,13 +669,10 @@
       r.latitude != null && r.longitude != null &&
       isFinite(Number(r.latitude)) && isFinite(Number(r.longitude))
     );
-    log('info', 'Plottable rows:', withCoords.length, 'of', filteredRows.length);
     if (!withCoords.length) return;
-
     withCoords.forEach(row => addMarker(row));
-
     const bounds = withCoords.map(r => [Number(r.latitude), Number(r.longitude)]);
-    if (withCoords.length === 1) map.setView(bounds[0], 14);
+    if (withCoords.length === 1) map.setView(bounds[0], 13);
     else map.fitBounds(bounds, { padding: [40, 40] });
   }
 
@@ -684,9 +682,11 @@
     const hasPhoto = !!row.photo_base64;
     const init = initials(row.nurse_name);
     const id = rowId(row);
+    const stateClass = 'state-' + statusClass(row);
+
     const iconHtml = hasPhoto
-      ? `<div class="map-pin" data-id="${escapeHtml(id)}"><img src="${row.photo_base64}" alt=""></div>`
-      : `<div class="map-pin no-photo" data-id="${escapeHtml(id)}">${escapeHtml(init)}</div>`;
+      ? `<div class="map-pin ${stateClass}" data-id="${escapeHtml(id)}"><img src="${row.photo_base64}" alt=""></div>`
+      : `<div class="map-pin no-photo ${stateClass}" data-id="${escapeHtml(id)}">${escapeHtml(init)}</div>`;
     const icon = L.divIcon({ html: iconHtml, className: '', iconSize: [46, 46], iconAnchor: [23, 23] });
     const marker = L.marker([lat, lng], { icon }).addTo(map);
     marker.on('click', () => selectRow(row));
@@ -698,13 +698,12 @@
      Sidebar list
      ============================================================ */
   function renderList(){
-    if (!filteredRows.length) {
+    if (!filteredRows.length){
       listEl.innerHTML = '<div class="state-msg"><b>No matching attendance</b>Try a wider date range or clear filters.</div>';
       punchCountEl.textContent = '0';
       return;
     }
     punchCountEl.textContent = String(filteredRows.length);
-
     const multiDay = dateFrom.value && dateTo.value && dateFrom.value !== dateTo.value;
 
     listEl.innerHTML = filteredRows.map(row => {
@@ -715,29 +714,45 @@
         : `<div class="thumb no-photo">${escapeHtml(initials(row.nurse_name))}</div>`;
       const durMs = durationOf(row);
       const durStr = durMs != null ? fmtDuration(durMs) : null;
+      const distM = rowDistance(row);
+      const distStr = distM != null ? fmtDistance(distM) : null;
       const datePill = multiDay ? `<span class="pill date">${escapeHtml(fmtDateShort(row[detectedDateColumn] || row.sign_in_at))}</span>` : '';
+
+      /* Times row */
       const timesHtml =
         `<span class="pill in">IN ${escapeHtml(fmtTime(row.sign_in_at))}</span>` +
         (row.sign_out_at
-          ? `<span class="pill out">OUT ${escapeHtml(fmtTime(row.sign_out_at))}</span>` +
-            (durStr ? `<span class="pill dur">${escapeHtml(durStr)}</span>` : '')
+          ? `<span class="pill out">OUT ${escapeHtml(fmtTime(row.sign_out_at))}</span>`
           : `<span class="pill miss">Missing sign-out</span>`);
-      const typeBadge = row.emp_type ? `<span class="pill type">${escapeHtml(row.emp_type)}</span>` : '';
+
+      /* Duration + distance pills */
+      const metricsHtml =
+        (durStr ? `<span class="pill dur">⏱ ${escapeHtml(durStr)}</span>` : '') +
+        (distStr ? `<span class="pill dist">📍 ${escapeHtml(distStr)}</span>` : '');
+
+      /* Staff type — beside the name */
+      const typeKey = String(row.emp_type || '').toLowerCase();
+      const typeBadge = row.emp_type
+        ? `<span class="staff-type ${escapeHtml(typeKey)}">${escapeHtml(row.emp_type)}</span>` : '';
+
       return `
         <div class="item${selectedId === id ? ' active' : ''}" data-id="${escapeHtml(id)}">
           ${thumb}
           <div class="info">
-            <div class="name">${escapeHtml(row.nurse_name || '—')}</div>
+            <div class="name-row">
+              <span class="name">${escapeHtml(row.nurse_name || '—')}</span>
+              ${typeBadge}
+            </div>
             <div class="meta">${escapeHtml(row.employee_id || '')}${row.care_centre ? ' · ' + escapeHtml(row.care_centre) : ''}</div>
             <div class="patient">👤 ${escapeHtml(row.patient_name || 'No patient')}</div>
-            <div class="times">${datePill}${timesHtml}${typeBadge}</div>
+            <div class="times">${datePill}${timesHtml}${metricsHtml}</div>
           </div>
         </div>`;
     }).join('');
 
     listEl.querySelectorAll('.item').forEach(el => {
       el.addEventListener('click', (e) => {
-        if (e.target.classList.contains('thumb') && e.target.dataset.photo) {
+        if (e.target.classList.contains('thumb') && e.target.dataset.photo){
           openLightbox(e.target.dataset.photo); return;
         }
         const row = filteredRows.find(r => rowId(r) === el.dataset.id);
@@ -747,21 +762,21 @@
   }
 
   /* ============================================================
-     Selection & detail
+     Selection — detail view slides in inside sidebar
      ============================================================ */
   function selectRow(row){
     selectedId = rowId(row);
     listEl.querySelectorAll('.item').forEach(el => {
       el.classList.toggle('active', el.dataset.id === selectedId);
     });
-    if (mapReady && L && row.latitude != null && row.longitude != null) {
-      map.setView([Number(row.latitude), Number(row.longitude)], Math.max(map.getZoom(), 14), { animate: true });
-    }
+    /* Highlight marker */
     markers.forEach(m => {
       const pin = m.getElement && m.getElement().querySelector('.map-pin');
       if (pin) pin.classList.toggle('selected', rowId(m._row || {}) === selectedId);
     });
+
     showDetail(row);
+    plotSelectedRoute(row);
   }
 
   function showDetail(row){
@@ -771,51 +786,153 @@
       : `<div class="avatar">${escapeHtml(initials(row.nurse_name))}</div>`;
     const durMs = durationOf(row);
     const durStr = durMs != null ? fmtDuration(durMs) : '—';
-    const mapLink = (row.latitude != null && row.longitude != null)
-      ? `<a href="https://maps.google.com/?q=${Number(row.latitude)},${Number(row.longitude)}" target="_blank" rel="noopener">Open in Maps ↗</a>`
-      : '—';
-    const typeBadge = row.emp_type ? `<span class="type-badge">${escapeHtml(row.emp_type)}</span>` : '';
+    const distM = rowDistance(row);
+    const distStr = distM != null ? fmtDistance(distM) : null;
 
-    detailContent.innerHTML = `
-      <div class="d-head">
+    const inCoords = (row.latitude != null && row.longitude != null)
+      ? { lat: Number(row.latitude), lng: Number(row.longitude) } : null;
+    const outCoords = outCoordsOf(row);
+
+    const inMapLink = inCoords
+      ? `<a href="https://maps.google.com/?q=${inCoords.lat},${inCoords.lng}" target="_blank" rel="noopener">Open ↗</a>`
+      : '—';
+    const outMapLink = outCoords
+      ? `<a href="https://maps.google.com/?q=${outCoords.lat},${outCoords.lng}" target="_blank" rel="noopener">Open ↗</a>`
+      : '—';
+
+    const typeKey = String(row.emp_type || '').toLowerCase();
+    const typeBadge = row.emp_type
+      ? `<span class="staff-type ${escapeHtml(typeKey)}" style="font-size:10px;padding:2px 9px;">${escapeHtml(row.emp_type)}</span>`
+      : '';
+
+    const stClass = statusClass(row);
+    const stLabel = stClass === 'in' ? 'Signed in (open)' : stClass === 'out' ? 'Signed out' : 'Missing sign-out';
+
+    detailBody.innerHTML = `
+      <div class="d-profile">
         ${photoHtml}
         <div>
-          <h2>${escapeHtml(row.nurse_name || '—')}</h2>
+          <div class="d-name-row">
+            <h2>${escapeHtml(row.nurse_name || '—')}</h2>
+            ${typeBadge}
+          </div>
           <div class="d-sub">${escapeHtml(row.employee_id || '')} · ${escapeHtml(row.care_centre || '')}</div>
-          ${typeBadge}
+          <div class="d-sub" style="margin-top:4px;color:${stClass==='miss'?'var(--red)':stClass==='in'?'var(--green-bright)':'var(--green)'};font-weight:700;">● ${escapeHtml(stLabel)}</div>
         </div>
       </div>
-      <div class="d-body">
-        <div class="d-row"><span class="k">Patient</span><span class="v">${escapeHtml(row.patient_name || '—')}</span></div>
-        <div class="d-row"><span class="k">Signed in</span><span class="v">${escapeHtml(fmtDateTime(row.sign_in_at))}</span></div>
-        <div class="d-row"><span class="k">Signed out</span><span class="v">${escapeHtml(row.sign_out_at ? fmtDateTime(row.sign_out_at) : 'Still open')}</span></div>
-        <div class="d-row"><span class="k">Duration</span><span class="v">${escapeHtml(durStr)}</span></div>
-        <div class="d-row"><span class="k">Sign-in location</span><span class="v">${escapeHtml(row.location_text || '—')}</span></div>
-        <div class="d-row"><span class="k">GPS</span><span class="v">${row.latitude != null ? Number(row.latitude).toFixed(5) + ', ' + Number(row.longitude).toFixed(5) : '—'}<br>${mapLink}</span></div>
-        <div class="d-row"><span class="k">Accuracy</span><span class="v">${row.accuracy_meters != null ? escapeHtml(row.accuracy_meters) + ' m' : '—'}</span></div>
-        <div class="d-row"><span class="k">Remarks</span><span class="v">${escapeHtml(row.remarks || '—')}</span></div>
-      </div>`;
 
-    const img = detailContent.querySelector('img[data-photo]');
+      <div class="d-section">
+        <h3><span class="dot in"></span>Sign-In</h3>
+        <div class="d-row"><span class="k">Time</span><span class="v">${escapeHtml(fmtDateTime(row.sign_in_at))}</span></div>
+        <div class="d-row"><span class="k">Location</span><span class="v">${escapeHtml(row.location_text || '—')}</span></div>
+        <div class="d-row"><span class="k">Coordinates</span><span class="v">${inCoords ? inCoords.lat.toFixed(5) + ', ' + inCoords.lng.toFixed(5) : '—'} ${inMapLink}</span></div>
+        <div class="d-row"><span class="k">Accuracy</span><span class="v">${row.accuracy_meters != null ? escapeHtml(row.accuracy_meters) + ' m' : '—'}</span></div>
+      </div>
+
+      <div class="d-section">
+        <h3><span class="dot ${row.sign_out_at ? 'out' : 'miss'}"></span>Sign-Out</h3>
+        ${row.sign_out_at ? `
+          <div class="d-row"><span class="k">Time</span><span class="v">${escapeHtml(fmtDateTime(row.sign_out_at))}</span></div>
+          <div class="d-row"><span class="k">Coordinates</span><span class="v">${outCoords ? outCoords.lat.toFixed(5) + ', ' + outCoords.lng.toFixed(5) : 'Not recorded'} ${outMapLink}</span></div>
+        ` : `
+          <div class="d-row"><span class="k">Status</span><span class="v" style="color:var(--red);font-weight:700;">Not signed out</span></div>
+        `}
+      </div>
+
+      ${distStr ? `
+        <div class="distance-banner">
+          <span class="label">Distance</span>
+          <span class="value">${escapeHtml(distStr)}</span>
+        </div>
+      ` : ''}
+
+      <div class="d-section">
+        <h3>Shift Summary</h3>
+        <div class="d-row"><span class="k">Patient</span><span class="v">${escapeHtml(row.patient_name || '—')}</span></div>
+        <div class="d-row"><span class="k">Duration</span><span class="v">${escapeHtml(durStr)}</span></div>
+        <div class="d-row"><span class="k">Remarks</span><span class="v">${escapeHtml(row.remarks || '—')}</span></div>
+      </div>
+    `;
+
+    const img = detailBody.querySelector('img[data-photo]');
     if (img) img.addEventListener('click', () => openLightbox(img.dataset.photo));
 
-    detailPanel.classList.add('open');
-    detailBackdrop.classList.add('show');
+    detailView.classList.add('open');
   }
 
-  function closeDetailPanel(){
-    detailPanel.classList.remove('open');
-    detailBackdrop.classList.remove('show');
+  function closeDetailView(){
+    detailView.classList.remove('open');
     selectedId = null;
     listEl.querySelectorAll('.item.active').forEach(el => el.classList.remove('active'));
     markers.forEach(m => {
       const pin = m.getElement && m.getElement().querySelector('.map-pin');
       if (pin) pin.classList.remove('selected');
     });
+    clearSelectedOverlay();
+    plotAll();  // reset view to all rows
   }
-  closeDetail.addEventListener('click', closeDetailPanel);
-  detailBackdrop.addEventListener('click', closeDetailPanel);
+  backBtn.addEventListener('click', closeDetailView);
 
+  /* Plot sign-in + sign-out locations of the selected row with a dashed line */
+  function plotSelectedRoute(row){
+    if (!mapReady || !L) return;
+    clearSelectedOverlay();
+
+    const inLat = row.latitude != null ? Number(row.latitude) : null;
+    const inLng = row.longitude != null ? Number(row.longitude) : null;
+    const outCoords = outCoordsOf(row);
+    if (inLat == null || inLng == null) return;
+
+    /* Small green mini pin for sign-in */
+    const inPinHtml = `<div class="map-pin mini state-in" style="border-color:var(--green-bright);animation:none;"><img src="${row.photo_base64||''}" alt=""></div>`;
+    const inPinHtmlNoPhoto = `<div class="map-pin mini no-photo state-in" style="border-color:var(--green-bright);animation:none;">IN</div>`;
+    const inIcon = L.divIcon({
+      html: row.photo_base64 ? inPinHtml : inPinHtmlNoPhoto,
+      className: '', iconSize: [30, 30], iconAnchor: [15, 15]
+    });
+    const inMarker = L.marker([inLat, inLng], { icon: inIcon, zIndexOffset: 1000 }).addTo(map);
+    inMarker.bindTooltip('Sign-in', { permanent: false, direction: 'top' });
+    selectedOverlay.push(inMarker);
+
+    if (outCoords){
+      const outIcon = L.divIcon({
+        html: `<div class="map-pin mini state-out" style="border-color:var(--green);"><img src="${row.photo_base64||''}" alt=""></div>`,
+        className: '', iconSize: [30, 30], iconAnchor: [15, 15]
+      });
+      const outMarker = L.marker([outCoords.lat, outCoords.lng], { icon: outIcon, zIndexOffset: 1000 }).addTo(map);
+      outMarker.bindTooltip('Sign-out', { permanent: false, direction: 'top' });
+      selectedOverlay.push(outMarker);
+
+      /* Dashed line between the two */
+      const line = L.polyline(
+        [[inLat, inLng], [outCoords.lat, outCoords.lng]],
+        { color:'#4B3B7A', weight:3, opacity:0.85, dashArray:'8,8' }
+      ).addTo(map);
+      selectedOverlay.push(line);
+
+      /* Distance label at midpoint */
+      const dist = haversineMeters(inLat, inLng, outCoords.lat, outCoords.lng);
+      const distStr = fmtDistance(dist);
+      if (distStr){
+        const mid = [(inLat + outCoords.lat)/2, (inLng + outCoords.lng)/2];
+        const distMarker = L.marker(mid, {
+          icon: L.divIcon({ html:'', className:'', iconSize:[0,0] }),
+          opacity: 0
+        }).addTo(map);
+        distMarker.bindTooltip(distStr, { permanent: true, direction:'top', className:'dist-tip', offset:[0,-6] });
+        selectedOverlay.push(distMarker);
+      }
+
+      /* Fit bounds to include both */
+      map.fitBounds([[inLat, inLng], [outCoords.lat, outCoords.lng]], { padding: [60, 60] });
+    } else {
+      map.setView([inLat, inLng], Math.max(map.getZoom(), 14));
+    }
+  }
+
+  /* ============================================================
+     Lightbox
+     ============================================================ */
   function openLightbox(src){ lightboxImg.src = src; lightbox.classList.add('open'); }
   closeLightbox.addEventListener('click', () => lightbox.classList.remove('open'));
   lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.classList.remove('open'); });
@@ -826,34 +943,22 @@
   async function loadData(){
     let fromStr = dateFrom.value || todayStr;
     let toStr   = dateTo.value   || todayStr;
-    if (fromStr > toStr) { const t = fromStr; fromStr = toStr; toStr = t; dateFrom.value = fromStr; dateTo.value = toStr; }
+    if (fromStr > toStr){ const t = fromStr; fromStr = toStr; toStr = t; dateFrom.value = fromStr; dateTo.value = toStr; }
 
-    log('info', '──── Load start: ' + fromStr + ' → ' + toStr + ' ────');
     listEl.innerHTML = '<div class="state-msg"><div class="spinner"></div>Loading attendance…</div>';
     punchCountEl.textContent = '—';
     refreshBtn.disabled = true;
+    closeDetailView();
 
     try {
       const rows = await fetchAttendance(fromStr, toStr);
       allRows = Array.isArray(rows) ? rows : [];
-      log('ok', 'Total rows loaded:', allRows.length);
-      if (allRows.length && allRows[0]){
-        log('info', 'First row keys:', Object.keys(allRows[0]).join(', '));
-      }
       applyFilters();
-      if (!allRows.length){
-        log('err', 'No rows in this date range. Try a wider "From/To", or check the ' + detectedDateColumn + ' value of your test row.');
-      }
-    } catch (err) {
-      log('err', 'Load failed:', err.message);
+    } catch (err){
       listEl.innerHTML = `<div class="errmsg">
         <b>Could not load attendance.</b><br>
-        ${escapeHtml(err.message || 'Unknown error')}
-        <ol>
-          <li>Open Supabase → <b>Table Editor → ${escapeHtml(TABLE)}</b>. Does the table exist and does it have data?</li>
-          <li>Check <b>Authentication → Policies</b>. You need <code>SELECT</code> for the <code>anon</code> role (or turn RLS off temporarily).</li>
-          <li>Look at the <b>debug banner at the top</b> for the exact HTTP error.</li>
-        </ol>
+        ${escapeHtml(err.message || 'Unknown error')}<br><br>
+        Check the browser console for details.
       </div>`;
       punchCountEl.textContent = '0';
     } finally {
@@ -874,7 +979,6 @@
   });
 
   (async function init(){
-    log('info', 'App starting');
     await initMap();
     await loadData();
   })();
