@@ -4,427 +4,664 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Apollo Home Care — Attendance Map</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<meta name="theme-color" content="#1F5940">
 <style>
   :root{
-    --ink:#16233B; --paper:#EDF2F1; --card:#FFFFFF;
-    --pulse:#2F7A5C; --pulse-deep:#1F5940; --line:#D7DFDD; --muted:#5C6B72; --danger:#B23A2E;
+    --ink:#141C2B; --paper:#EEF2F1; --card:#FFFFFF;
+    --pulse:#2F7A5C; --pulse-deep:#1B4C37; --pulse-soft:#EAF3EF;
+    --line:#D8E0DD; --muted:#6A7A82; --danger:#B23A2E;
+    --danger-soft:#FBEAE7; --radius:16px; --radius-sm:10px;
+    --font-mono:ui-monospace,'SF Mono','Roboto Mono','Courier New',monospace;
   }
-  *{ box-sizing:border-box; }
-  html, body{ margin:0; height:100%; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color:var(--ink); background:var(--paper); }
-
-  .topbar{
-    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
-    padding:12px 14px; background:var(--card); border-bottom:1px solid var(--line);
-    position:relative; z-index:1000;
-  }
-  .brand{ display:flex; align-items:center; gap:10px; margin-right:14px; }
-  .brand img{ height:36px; width:auto; border-radius:6px; }
-  .brand h1{ font-size:15px; margin:0; font-weight:700; white-space:nowrap; }
-
-  .topbar label{ font-size:11px; font-weight:600; color:var(--muted); display:block; margin-bottom:3px; }
-  .field-group{ display:flex; flex-direction:column; }
-  .topbar input, .topbar select{
-    padding:7px 9px; border:1px solid #C9D3D1; border-radius:7px; font-size:13px;
-    font-family:ui-monospace,'SF Mono','Roboto Mono','Courier New',monospace; background:#FBFCFC; color:var(--ink);
-  }
-  .topbar select{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; min-width:130px; }
-  .topbar button{
-    padding:8px 16px; border:none; border-radius:7px; background:var(--pulse-deep); color:#fff;
-    font-size:13px; font-weight:600; cursor:pointer; align-self:flex-end;
-  }
-  .topbar button:hover{ background:var(--pulse); }
-  .count-badge{ font-size:12px; color:var(--muted); align-self:flex-end; padding-bottom:8px; white-space:nowrap; }
-
-  .search-group{ position:relative; min-width:180px; }
-  .search-group input{ padding-right:28px; width:100%; }
-  .search-clear{
-    position:absolute; right:8px; bottom:7px; cursor:pointer;
-    background:none; border:none; color:var(--muted); font-size:15px; line-height:1;
-    padding:0; display:none;
-  }
-  .search-clear.visible{ display:block; }
-
-  .map-wrap{ position:relative; height:calc(100% - 66px); }
-  #map{ position:absolute; top:0; left:0; right:0; bottom:0; }
-
-  .legend{
-    position:absolute; bottom:20px; left:12px; z-index:900; background:var(--card);
-    border:1px solid var(--line); border-radius:9px; padding:9px 12px; font-size:12px;
-    box-shadow:0 2px 8px rgba(22,35,59,0.12);
-  }
-  .legend div{ display:flex; align-items:center; gap:6px; margin:3px 0; }
-  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
-  .dot.ring{ background:transparent; border:2.5px solid #B23A2E; }
-  .dot.fill{ background:#2F7A5C; }
-
-  .leaflet-popup-content{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:12.5px; line-height:1.6; }
-  .leaflet-popup-content b{ color:var(--pulse-deep); }
-  .popup-photo{ display:block; width:100%; max-width:200px; border-radius:7px; margin-top:8px; border:1px solid var(--line); }
-  .popup-badge{ display:inline-block; padding:1px 7px; border-radius:5px; font-size:11px; font-weight:700; margin-left:4px; }
-  .popup-badge.late{ background:#FBEAE7; color:var(--danger); }
-  .popup-badge.ontime{ background:#EAF3EF; color:var(--pulse-deep); }
-  .popup-badge.signedout{ background:#EAF3EF; color:var(--pulse-deep); }
-  .popup-badge.signedin{ background:#FFF6E5; color:#8A5A1F; }
-
-  .custom-pin-icon{ background:transparent; border:none; }
-  .pin-wrap{ display:flex; flex-direction:column; align-items:center; cursor:pointer; }
-  .pin-avatar{
-    width:40px; height:40px; border-radius:50%; border:3px solid #8A94A6;
-    background:#fff; box-shadow:0 2px 6px rgba(22,35,59,0.28);
-    display:flex; align-items:center; justify-content:center; overflow:hidden;
-    position:relative;
-  }
-  .pin-avatar.on-duty{ border-color:#2F7A5C; }
-  .pin-avatar.on-duty::after{
-    content:''; position:absolute; top:-3px; right:-3px;
-    width:12px; height:12px; border-radius:50%;
-    background:#E8B84B; border:2px solid #fff;
-    box-shadow:0 0 0 0 rgba(232,184,75,0.7);
-    animation:pulse 1.8s infinite;
-  }
-  @keyframes pulse{
-    0%{ box-shadow:0 0 0 0 rgba(232,184,75,0.7); }
-    70%{ box-shadow:0 0 0 8px rgba(232,184,75,0); }
-    100%{ box-shadow:0 0 0 0 rgba(232,184,75,0); }
-  }
-  .pin-avatar.signed-out{ border-color:#8A94A6; opacity:0.85; }
-
-  .pin-avatar-img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .pin-avatar-initials{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:13px; font-weight:700; color:var(--ink); }
-  .pin-label{
-    margin-top:2px; background:#fff; border:1.5px solid #8A94A6; border-radius:6px;
-    padding:1px 6px; font-size:10px; font-weight:600; color:var(--ink); white-space:nowrap;
-    box-shadow:0 1px 3px rgba(22,35,59,0.18); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px; line-height:1.5; background:var(--paper); color:var(--ink);
+    display:flex; flex-direction:column; min-height:100vh;
   }
 
-  .loading-note{
-    position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:900;
-    background:var(--card); border:1px solid var(--line); border-radius:8px;
-    padding:8px 14px; font-size:12.5px; color:var(--muted); display:none;
+  /* ── Toolbar ─────────────────────────── */
+  .toolbar{
+    background:linear-gradient(135deg,var(--pulse-deep),var(--pulse));
+    color:#fff; padding:14px 20px; display:flex; align-items:center;
+    gap:14px; flex-wrap:wrap; flex-shrink:0;
+    box-shadow:0 2px 12px rgba(27,76,55,0.25); z-index:10;
+  }
+  .toolbar h1{ margin:0; font-size:17px; font-weight:700; letter-spacing:-0.015em; }
+  .toolbar .sub{ font-size:12px; opacity:0.8; font-family:var(--font-mono); }
+  .toolbar .spacer{ flex:1; }
+  .toolbar label{ font-size:12.5px; font-weight:600; opacity:0.9; display:flex; flex-direction:column; gap:4px; }
+  .toolbar input[type=date]{
+    padding:7px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.3);
+    background:rgba(255,255,255,0.15); color:#fff; font-size:13px;
+    font-family:var(--font-mono); -webkit-appearance:none;
+  }
+  .toolbar input[type=date]::-webkit-calendar-picker-indicator{ filter:invert(1); cursor:pointer; }
+  .toolbar button{
+    padding:9px 18px; border:none; border-radius:9px; background:#fff;
+    color:var(--pulse-deep); font-weight:700; font-size:13.5px; cursor:pointer;
+    transition:transform .1s, filter .15s;
+  }
+  .toolbar button:hover{ filter:brightness(0.95); }
+  .toolbar button:active{ transform:scale(0.97); }
+  .toolbar button:disabled{ opacity:0.5; cursor:not-allowed; }
+
+  /* ── Layout ──────────────────────────── */
+  .main{ flex:1; display:flex; min-height:0; }
+  #map{ flex:1; min-height:400px; background:#dde5e2; }
+  .sidebar{
+    width:340px; flex-shrink:0; background:var(--card);
+    border-left:1px solid var(--line); display:flex; flex-direction:column;
+    overflow:hidden;
+  }
+  .sidebar-header{
+    padding:14px 18px; border-bottom:1px solid var(--line);
+    font-size:12px; font-weight:700; letter-spacing:0.08em;
+    text-transform:uppercase; color:var(--pulse-deep);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .sidebar-header .count{
+    background:var(--pulse-soft); color:var(--pulse-deep);
+    padding:2px 10px; border-radius:20px; font-size:11px;
+    font-family:var(--font-mono); letter-spacing:0;
+  }
+  .list{ flex:1; overflow-y:auto; padding:8px; }
+  .list::-webkit-scrollbar{ width:6px; }
+  .list::-webkit-scrollbar-thumb{ background:var(--line); border-radius:3px; }
+
+  .item{
+    display:flex; gap:11px; padding:11px 10px; border-radius:12px;
+    cursor:pointer; transition:background .15s; align-items:flex-start;
+    border:1px solid transparent;
+  }
+  .item:hover{ background:#F6F9F8; border-color:var(--line); }
+  .item.active{ background:var(--pulse-soft); border-color:#BFDBCF; }
+  .item img.thumb{
+    width:52px; height:52px; border-radius:9px; object-fit:cover;
+    flex-shrink:0; border:1px solid var(--line); background:#eee;
+    cursor:pointer;
+  }
+  .item img.thumb.empty{ display:flex; align-items:center; justify-content:center; }
+  .item .info{ flex:1; min-width:0; }
+  .item .name{ font-weight:700; font-size:13.5px; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .item .meta{ font-size:11.5px; color:var(--muted); margin-top:2px; font-family:var(--font-mono); }
+  .item .patient{ font-size:12px; color:var(--ink-soft); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .item .badge{
+    display:inline-block; font-size:10px; font-weight:700; padding:1px 7px;
+    border-radius:20px; margin-top:4px; letter-spacing:0.03em;
+  }
+  .badge.open{ background:#FDF3E0; color:#8A5A1F; }
+  .badge.closed{ background:var(--pulse-soft); color:var(--pulse-deep); }
+
+  /* ── Detail panel (slide-up) ─────────── */
+  .detail{
+    position:fixed; bottom:0; left:0; right:0; z-index:900;
+    background:#fff; border-radius:20px 20px 0 0;
+    box-shadow:0 -10px 40px -12px rgba(20,28,43,0.35);
+    transform:translateY(100%); transition:transform .3s ease;
+    max-height:80vh; overflow-y:auto; max-width:600px; margin:0 auto;
+  }
+  .detail.open{ transform:translateY(0); }
+  .detail .drag-bar{
+    width:44px; height:4px; border-radius:2px; background:var(--line);
+    margin:10px auto 0;
+  }
+  .detail .d-head{ display:flex; gap:16px; padding:16px 20px 8px; align-items:center; }
+  .detail .d-head img{
+    width:84px; height:84px; border-radius:12px; object-fit:cover;
+    border:1px solid var(--line); flex-shrink:0; background:#eee;
+  }
+  .detail .d-head h2{ margin:0; font-size:18px; font-weight:700; line-height:1.25; }
+  .detail .d-head .d-sub{ font-size:12.5px; color:var(--muted); margin-top:4px; font-family:var(--font-mono); }
+  .detail .d-body{ padding:10px 20px 26px; }
+  .detail .d-row{
+    display:flex; justify-content:space-between; gap:14px; padding:9px 0;
+    border-bottom:1px solid var(--line-soft,#E7ECEA); font-size:13.5px;
+  }
+  .detail .d-row:last-child{ border-bottom:none; }
+  .detail .d-row .k{ color:var(--muted); font-weight:600; flex-shrink:0; }
+  .detail .d-row .v{ text-align:right; word-break:break-word; }
+  .detail .d-row .v a{ color:var(--pulse-deep); font-weight:700; }
+  .detail .close-detail{
+    position:absolute; top:12px; right:14px; background:none; border:none;
+    font-size:24px; color:var(--muted); cursor:pointer; line-height:1; padding:4px 8px;
+  }
+  .detail-backdrop{
+    position:fixed; inset:0; background:rgba(20,28,43,0.25); z-index:850;
+    opacity:0; pointer-events:none; transition:opacity .3s;
+  }
+  .detail-backdrop.show{ opacity:1; pointer-events:auto; }
+
+  /* ── States ──────────────────────────── */
+  .state-msg{ padding:40px 24px; text-align:center; color:var(--muted); font-size:14px; }
+  .state-msg b{ color:var(--ink); display:block; font-size:15px; margin-bottom:6px; }
+  .spinner{
+    width:32px; height:32px; border-radius:50%; border:3px solid var(--line);
+    border-top-color:var(--pulse); margin:0 auto 16px; animation:spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .errmsg{
+    font-size:13px; color:var(--danger); padding:10px 14px;
+    background:var(--danger-soft); border:1px solid #E3B4AB;
+    border-radius:9px; margin:12px; line-height:1.55;
   }
 
-  .no-results{
-    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:900;
-    background:var(--card); border:1px solid var(--line); border-radius:10px;
-    padding:16px 22px; font-size:13px; color:var(--muted); display:none;
-    box-shadow:0 4px 16px rgba(22,35,59,0.12); text-align:center;
+  /* ── Map markers ─────────────────────── */
+  .map-pin{
+    width:44px; height:44px; border-radius:50%; overflow:hidden;
+    border:3px solid #fff; box-shadow:0 3px 10px rgba(20,28,43,0.4);
+    background:#ddd; cursor:pointer; transition:transform .15s;
   }
-  .no-results.visible{ display:block; }
+  .map-pin:hover{ transform:scale(1.1); }
+  .map-pin img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .map-pin.no-photo{ display:flex; align-items:center; justify-content:center;
+    font-weight:700; color:#fff; background:linear-gradient(135deg,var(--pulse-deep),var(--pulse));
+    font-size:15px; }
+  .map-pin.selected{ border-color:var(--pulse); box-shadow:0 0 0 4px rgba(47,122,92,0.3),0 3px 10px rgba(20,28,43,0.4); }
+
+  /* ── Lightbox ────────────────────────── */
+  .lightbox{
+    position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.9);
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  .lightbox.open{ display:flex; }
+  .lightbox img{ max-width:100%; max-height:100%; border-radius:10px; box-shadow:0 10px 40px rgba(0,0,0,0.5); }
+  .lightbox .close-lb{
+    position:absolute; top:20px; right:24px; background:none; border:none;
+    color:#fff; font-size:36px; cursor:pointer; line-height:1;
+  }
+
+  @media (max-width:760px){
+    .main{ flex-direction:column; }
+    #map{ min-height:280px; flex:0 0 45vh; }
+    .sidebar{ width:100%; flex:1; border-left:none; border-top:1px solid var(--line); }
+    .toolbar{ padding:11px 14px; gap:10px; }
+    .toolbar h1{ font-size:15px; }
+    .detail{ max-width:100%; border-radius:16px 16px 0 0; }
+  }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="brand">
-    <img src="logo.png" alt="Apollo Home Care">
-    <h1>📍 Attendance Map</h1>
+<div class="toolbar">
+  <div>
+    <h1>Attendance Map</h1>
+    <div class="sub">Apollo Home Care — Nurses Daily Attendance</div>
   </div>
-
-  <div class="field-group search-group">
-    <label for="searchBox">Search Emp ID / Name</label>
-    <input type="text" id="searchBox" placeholder="e.g. AHC1234 or Vishnu" autocomplete="off">
-    <button type="button" class="search-clear" id="searchClear" aria-label="Clear search">✕</button>
-  </div>
-
-  <div class="field-group">
-    <label for="startDate">From</label>
-    <input type="date" id="startDate">
-  </div>
-  <div class="field-group">
-    <label for="endDate">To</label>
-    <input type="date" id="endDate">
-  </div>
-  <div class="field-group">
-    <label for="centreFilter">Care Centre</label>
-    <select id="centreFilter">
-      <option value="">All Centres</option>
-      <option value="Mumbai">Mumbai</option>
-      <option value="Bangalore">Bangalore</option>
-      <option value="Chennai">Chennai</option>
-      <option value="Hyderabad">Hyderabad</option>
-      <option value="Madurai">Madurai</option>
-      <option value="Mysore">Mysore</option>
-      <option value="Delhi">Delhi</option>
-      <option value="Indore">Indore</option>
-      <option value="Kolkata">Kolkata</option>
-      <option value="Guwahati">Guwahati</option>
-    </select>
-  </div>
-  <div class="field-group">
-    <label for="empTypeFilter">Emp Type</label>
-    <select id="empTypeFilter">
-      <option value="">All Emp Types</option>
-      <option value="Onroll">Onroll</option>
-      <option value="AEN">AEN</option>
-      <option value="Agency">Agency</option>
-    </select>
-  </div>
-  <div class="field-group">
-    <label for="statusFilter">Status</label>
-    <select id="statusFilter">
-      <option value="">All</option>
-      <option value="in">Signed In (on duty)</option>
-      <option value="out">Signed Out</option>
-    </select>
-  </div>
-
-  <button id="loadBtn">Load</button>
-  <div class="count-badge" id="countBadge"></div>
+  <div class="spacer"></div>
+  <label>
+    Date
+    <input type="date" id="dateFilter">
+  </label>
+  <button type="button" id="refreshBtn">Refresh</button>
 </div>
 
-<div class="map-wrap">
+<div class="main">
   <div id="map"></div>
-  <div class="loading-note" id="loadingNote">Loading attendance…</div>
-  <div class="no-results" id="noResults">No matching records.<br><span style="font-size:11.5px;">Try clearing the search or widening the date range.</span></div>
-  <div class="legend">
-    <div><span class="dot fill"></span> Signed in (on duty)</div>
-    <div><span class="dot ring"></span> Signed out</div>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span>Punches</span>
+      <span class="count" id="punchCount">—</span>
+    </div>
+    <div class="list" id="list">
+      <div class="state-msg"><div class="spinner"></div>Loading attendance…</div>
+    </div>
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Detail bottom sheet -->
+<div class="detail-backdrop" id="detailBackdrop"></div>
+<div class="detail" id="detailPanel">
+  <button type="button" class="close-detail" id="closeDetail" aria-label="Close">&times;</button>
+  <div class="drag-bar"></div>
+  <div id="detailContent"></div>
+</div>
+
+<!-- Photo lightbox -->
+<div class="lightbox" id="lightbox">
+  <button type="button" class="close-lb" id="closeLightbox" aria-label="Close">&times;</button>
+  <img id="lightboxImg" alt="Full photo">
+</div>
+
 <script>
-  // ── Configuration ────────────────────────────────────────
+  /* ============================================================
+     CONFIG — same Supabase project as the attendance app
+     ============================================================ */
   const SUPABASE_URL      = 'https://pdgxpgvwgnptxdvffgos.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_FpqLF9z4wAxV7Jd-7ZLk2A_j0u74m80';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkZ3hwZ3Z3Z25wdHhkdmZmZ29zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwODE4NzQsImV4cCI6MjEwODY1Nzg3NH0.MT7IQIbwfLumBoUQ3PaXipoJti14z10rz8NBzqMMASo';
 
-  // ── Map init ─────────────────────────────────────────────
-  const map = L.map('map').setView([20.5937, 78.9629], 5);
+  /* The attendance table — adjust if yours is named differently.
+     Expected columns: submission_id, employee_id, nurse_name, care_centre,
+     patient_name, sign_in_at, sign_out_at, latitude, longitude, accuracy_meters,
+     location_text, remarks, photo_base64, emp_type.                        */
+  const TABLE = 'attendance';
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    maxZoom: 19
-  }).addTo(map);
+  /* Google Maps API key — replace with your own.
+     Enable "Maps JavaScript API" in Google Cloud Console.
+     Alternatively, the map falls back to OpenStreetMap/Leaflet if you prefer
+     to avoid a key — see USE_LEAFLET below.                                */
+  const GOOGLE_MAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY_HERE';
+  const USE_LEAFLET = true; // set false to force Google Maps
 
-  let allRecords = [];
-  let markers    = [];
+  /* ============================================================
+     State
+     ============================================================ */
+  let map = null;
+  let markers = [];
+  let allRows = [];
+  let filteredRows = [];
+  let mapReady = false;
+  let selectedId = null;
 
-  // ── Utilities ────────────────────────────────────────────
-  function getInitials(name){
-    return String(name || '?').trim().split(/\s+/).map(w => w[0] || '').slice(0, 2).join('').toUpperCase();
+  const dateFilter   = document.getElementById('dateFilter');
+  const refreshBtn   = document.getElementById('refreshBtn');
+  const listEl       = document.getElementById('list');
+  const punchCountEl = document.getElementById('punchCount');
+  const detailPanel  = document.getElementById('detailPanel');
+  const detailContent= document.getElementById('detailContent');
+  const detailBackdrop = document.getElementById('detailBackdrop');
+  const closeDetail  = document.getElementById('closeDetail');
+  const lightbox     = document.getElementById('lightbox');
+  const lightboxImg  = document.getElementById('lightboxImg');
+  const closeLightbox= document.getElementById('closeLightbox');
+
+  /* Default date filter = today (local) */
+  function localDateStr(d){
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
-  function shortName(name){
-    const n = String(name || '').trim();
-    return n.length > 13 ? n.slice(0, 12) + '…' : n;
-  }
+  dateFilter.value = localDateStr(new Date());
+
+  /* ============================================================
+     Helpers
+     ============================================================ */
   function escapeHtml(str){
-    return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    return String(str == null ? '' : str).replace(/[&<>"']/g, c => (
+      {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+    ));
   }
-  function isSignedOut(r){
-    return !!(r.sign_out_at && String(r.sign_out_at).trim());
-  }
-  function formatDateTime(iso){
+  function fmtTime(iso){
+    if (!iso) return '—';
     const d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    return d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) +
-      ' ' + d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+  }
+  function fmtDateTime(iso){
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) +
+      ' ' + d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+  }
+  function fmtDuration(ms){
+    if (!isFinite(ms) || ms < 0) return '—';
+    const totalMin = Math.round(ms / 60000);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return (h > 0 ? h + 'h ' : '') + m + 'm';
+  }
+  function initials(name){
+    return String(name || '?').trim().split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
   }
 
-  // ── Marker icon ──────────────────────────────────────────
-  function buildMarkerIcon(r){
-    const signedOut = isSignedOut(r);
-    const avatarInner = r.photo_base64
-      ? '<img src="' + escapeHtml(r.photo_base64) + '" class="pin-avatar-img">'
-      : '<span class="pin-avatar-initials">' + escapeHtml(getInitials(r.nurse_name)) + '</span>';
+  /* ============================================================
+     Supabase REST fetch
+     ============================================================ */
+  async function fetchAttendance(dateStr){
+    // We query rows whose duty_date (or sign_in_at) is on the given date.
+    // Try duty_date column first (the attendance app writes sign_in_at as timestamptz).
+    const start = new Date(dateStr + 'T00:00:00');
+    const end   = new Date(dateStr + 'T23:59:59.999');
+    const startIso = start.toISOString();
+    const endIso   = end.toISOString();
 
-    const avatarClass = signedOut ? 'pin-avatar signed-out' : 'pin-avatar on-duty';
-    const labelColor  = signedOut ? '#8A94A6' : '#2F7A5C';
+    const url = SUPABASE_URL + '/rest/v1/' + TABLE +
+      '?select=*' +
+      '&sign_in_at=gte.' + encodeURIComponent(startIso) +
+      '&sign_in_at=lte.' + encodeURIComponent(endIso) +
+      '&order=sign_in_at.desc';
 
-    const html =
-      '<div class="pin-wrap">' +
-        '<div class="' + avatarClass + '">' + avatarInner + '</div>' +
-        '<div class="pin-label" style="border-color:' + labelColor + ';">' +
-          escapeHtml(shortName(r.nurse_name)) +
-        '</div>' +
-      '</div>';
+    const res = await fetch(url, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+        'Accept': 'application/json'
+      }
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      let msg = 'HTTP ' + res.status;
+      try { const j = JSON.parse(text); msg = j.message || j.hint || msg; } catch(e){}
+      throw new Error(msg);
+    }
+    return await res.json();
+  }
 
-    return L.divIcon({
-      html: html,
-      className: 'custom-pin-icon',
-      iconSize: [64, 56],
-      iconAnchor: [32, 56],
-      popupAnchor: [0, -56]
+  /* ============================================================
+     Map bootstrap
+     ============================================================ */
+  function loadScript(src){
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src; s.async = true;
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
     });
   }
 
-  // ── Popup content ────────────────────────────────────────
-  function buildPopupHtml(r){
-    const out = isSignedOut(r);
-    const statusBadge = out
-      ? '<span class="popup-badge signedout">Signed Out</span>'
-      : '<span class="popup-badge signedin">On Duty</span>';
-
-    const punctBadge = r.punctuality === 'Late'
-      ? '<span class="popup-badge late">Late</span>'
-      : (r.punctuality === 'On Time' ? '<span class="popup-badge ontime">On Time</span>' : '');
-
-    const photoHtml = r.photo_base64
-      ? '<img src="' + escapeHtml(r.photo_base64) + '" alt="Check-in photo" class="popup-photo">'
-      : '';
-
-    const signInLine =
-      'In: ' + escapeHtml(r.duty_date || '—') + ' ' + escapeHtml(r.duty_time || '') +
-      (r.location_text ? '<br>&nbsp;&nbsp;&nbsp;@ ' + escapeHtml(r.location_text) : '');
-
-    const signOutLine = out
-      ? '<br><b>Sign-out:</b> ' + escapeHtml(formatDateTime(r.sign_out_at)) +
-        (r.sign_out_location ? '<br>&nbsp;&nbsp;&nbsp;@ ' + escapeHtml(r.sign_out_location) : '') +
-        (r.sign_out_latitude && r.sign_out_longitude
-          ? '<br><a href="https://maps.google.com/?q=' + r.sign_out_latitude + ',' + r.sign_out_longitude +
-            '" target="_blank" rel="noopener" style="color:#1F5940;font-weight:600;">Sign-out map ↗</a>'
-          : '')
-      : '';
-
-    return (
-      '<b>' + escapeHtml(r.nurse_name) + '</b> (' + escapeHtml(r.employee_id || '') + ')' +
-      statusBadge + punctBadge + '<br>' +
-      escapeHtml(r.care_centre) + ' · ' + escapeHtml(r.emp_type || '—') + '<br>' +
-      'Patient: ' + escapeHtml(r.patient_name || 'N/A') + '<br>' +
-      signInLine + signOutLine +
-      photoHtml
-    );
+  async function initMap(){
+    if (USE_LEAFLET || !GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
+      await initLeafletMap();
+    } else {
+      try {
+        await loadScript('https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(GOOGLE_MAPS_API_KEY));
+        initGoogleMap();
+      } catch (e) {
+        console.warn('Google Maps failed, falling back to Leaflet', e);
+        await initLeafletMap();
+      }
+    }
   }
 
-  // ── Draw filtered records ────────────────────────────────
+  /* ── Leaflet (no API key needed) ─────── */
+  let L = null;
+  async function initLeafletMap(){
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+    await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+    L = window.L;
+    map = L.map('map', { zoomControl: true }).setView([20.5937, 78.9629], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    mapReady = true;
+    plotAll();
+  }
+
+  /* ── Google Maps ─────────────────────── */
+  function initGoogleMap(){
+    map = new google.maps.Map(document.getElementById('map'), {
+      center: { lat: 20.5937, lng: 78.9629 },
+      zoom: 5,
+      mapTypeControl: false,
+      streetViewControl: false
+    });
+    mapReady = true;
+    plotAll();
+  }
+
+  /* ============================================================
+     Plot markers
+     ============================================================ */
   function clearMarkers(){
-    markers.forEach(m => map.removeLayer(m));
+    if (L) {
+      markers.forEach(m => map.removeLayer(m));
+    } else if (window.google && map) {
+      markers.forEach(m => m.setMap(null));
+    }
     markers = [];
   }
 
-  function plotRecords(records){
+  function plotAll(){
+    if (!mapReady) return;
     clearMarkers();
-    const noResultsEl = document.getElementById('noResults');
-
-    const valid = records.filter(r =>
-      typeof r.latitude === 'number' && typeof r.longitude === 'number'
+    const withCoords = filteredRows.filter(r =>
+      r.latitude != null && r.longitude != null &&
+      isFinite(Number(r.latitude)) && isFinite(Number(r.longitude))
     );
 
-    if (valid.length === 0) noResultsEl.classList.add('visible');
-    else                    noResultsEl.classList.remove('visible');
+    if (!withCoords.length) return;
 
-    const centreSet = new Set();
-    let inCount = 0, outCount = 0;
-
-    valid.forEach(r => {
-      centreSet.add(r.care_centre);
-      if (isSignedOut(r)) outCount++; else inCount++;
-
-      const marker = L.marker([r.latitude, r.longitude], { icon: buildMarkerIcon(r) }).addTo(map);
-      marker.bindPopup(buildPopupHtml(r));
-      markers.push(marker);
+    withCoords.forEach(row => {
+      addMarker(row);
     });
 
-    if (valid.length > 0) {
-      if (valid.length === 1) {
-        map.setView([valid[0].latitude, valid[0].longitude], 14);
+    /* Fit bounds */
+    const bounds = withCoords.map(r => [Number(r.latitude), Number(r.longitude)]);
+    if (L) {
+      if (withCoords.length === 1) {
+        map.setView(bounds[0], 14);
       } else {
-        const bounds = L.latLngBounds(valid.map(r => [r.latitude, r.longitude]));
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+        map.fitBounds(bounds, { padding: [40, 40] });
       }
-    } else {
-      map.setView([20.5937, 78.9629], 5);
+    } else if (window.google && map) {
+      const gb = new google.maps.LatLngBounds();
+      bounds.forEach(b => gb.extend({ lat: b[0], lng: b[1] }));
+      if (withCoords.length === 1) {
+        map.setCenter({ lat: bounds[0][0], lng: bounds[0][1] });
+        map.setZoom(14);
+      } else {
+        map.fitBounds(gb, 60);
+      }
     }
-
-    document.getElementById('countBadge').textContent =
-      valid.length + ' shown · ' + inCount + ' in · ' + outCount + ' out · ' +
-      centreSet.size + ' centre' + (centreSet.size === 1 ? '' : 's');
   }
 
-  // ── Client-side filter ──────────────────────────────────
-  function applyFilters(){
-    const q      = document.getElementById('searchBox').value.trim().toLowerCase();
-    const status = document.getElementById('statusFilter').value;
+  function addMarker(row){
+    const lat = Number(row.latitude);
+    const lng = Number(row.longitude);
+    const hasPhoto = !!row.photo_base64;
+    const photo = hasPhoto ? row.photo_base64 : '';
+    const init = initials(row.nurse_name);
 
-    document.getElementById('searchClear').classList.toggle('visible', q.length > 0);
-
-    let filtered = allRecords;
-
-    if (q) {
-      filtered = filtered.filter(r =>
-        String(r.employee_id || '').toLowerCase().includes(q) ||
-        String(r.nurse_name  || '').toLowerCase().includes(q)
-      );
-    }
-    if (status === 'in')  filtered = filtered.filter(r => !isSignedOut(r));
-    if (status === 'out') filtered = filtered.filter(r =>  isSignedOut(r));
-
-    plotRecords(filtered);
-  }
-
-  // ── Fetch from Supabase ──────────────────────────────────
-  async function loadData(){
-    const start    = document.getElementById('startDate').value;
-    const end      = document.getElementById('endDate').value;
-    const centre   = document.getElementById('centreFilter').value;
-    const empType  = document.getElementById('empTypeFilter').value;
-
-    const loadingNote = document.getElementById('loadingNote');
-    loadingNote.style.display = 'block';
-    loadingNote.textContent = 'Loading attendance…';
-
-    // NOTE: duty_type is NOT selected — that column doesn't exist on the table.
-    let url = SUPABASE_URL + '/rest/v1/attendance'
-            + '?select=submission_id,nurse_name,employee_id,emp_type,care_centre,'
-            + 'duty_date,duty_time,patient_name,location_text,'
-            + 'latitude,longitude,punctuality,submitted_at,photo_base64,'
-            + 'sign_out_at,sign_out_location,sign_out_latitude,sign_out_longitude'
-            + '&order=submitted_at.desc';
-
-    if (start && end) {
-      url += '&duty_date=gte.' + encodeURIComponent(start)
-           + '&duty_date=lte.' + encodeURIComponent(end);
-    }
-    if (centre)   url += '&care_centre=eq.' + encodeURIComponent(centre);
-    if (empType)  url += '&emp_type=eq.'    + encodeURIComponent(empType);
-
-    try {
-      const res = await fetch(url, {
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+    if (L) {
+      const iconHtml = hasPhoto
+        ? `<div class="map-pin" data-id="${escapeHtml(row.submission_id || row.employee_id)}"><img src="${photo}" alt=""></div>`
+        : `<div class="map-pin no-photo" data-id="${escapeHtml(row.submission_id || row.employee_id)}">${escapeHtml(init)}</div>`;
+      const icon = L.divIcon({
+        html: iconHtml,
+        className: '',
+        iconSize: [44, 44],
+        iconAnchor: [22, 22]
+      });
+      const marker = L.marker([lat, lng], { icon }).addTo(map);
+      marker.on('click', () => selectRow(row, marker));
+      marker._row = row;
+      markers.push(marker);
+    } else if (window.google && map) {
+      const marker = new google.maps.Marker({
+        position: { lat, lng },
+        map,
+        title: row.nurse_name || '',
+        icon: {
+          url: hasPhoto ? photo : 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
+            `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44"><circle cx="22" cy="22" r="20" fill="#2F7A5C"/><text x="22" y="28" font-size="15" font-family="Arial" fill="#fff" text-anchor="middle" font-weight="bold">${init}</text></svg>`
+          ),
+          scaledSize: new google.maps.Size(44, 44),
+          anchor: new google.maps.Point(22, 22)
         }
       });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        alert('Could not load attendance: ' + txt.slice(0, 200));
-        return;
-      }
-
-      allRecords = await res.json();
-      applyFilters();
-    } catch (err) {
-      alert('Could not load attendance. Check your connection and try again.');
-    } finally {
-      loadingNote.style.display = 'none';
+      marker.addListener('click', () => selectRow(row, marker));
+      marker._row = row;
+      markers.push(marker);
     }
   }
 
-  // ── Wire up controls ─────────────────────────────────────
-  document.getElementById('loadBtn').addEventListener('click', loadData);
+  /* ============================================================
+     Sidebar list
+     ============================================================ */
+  function renderList(){
+    if (!filteredRows.length) {
+      listEl.innerHTML = '<div class="state-msg"><b>No attendance found</b>Try a different date or tap Refresh.</div>';
+      punchCountEl.textContent = '0';
+      return;
+    }
+    punchCountEl.textContent = String(filteredRows.length);
+    listEl.innerHTML = filteredRows.map(row => {
+      const id = row.submission_id || row.employee_id;
+      const hasPhoto = !!row.photo_base64;
+      const thumb = hasPhoto
+        ? `<img class="thumb" src="${row.photo_base64}" alt="" data-photo="${escapeHtml(row.photo_base64)}">`
+        : `<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;background:linear-gradient(135deg,#1B4C37,#2F7A5C);font-size:16px;">${escapeHtml(initials(row.nurse_name))}</div>`;
+      const badge = row.sign_out_at
+        ? '<span class="badge closed">Signed out</span>'
+        : '<span class="badge open">Open shift</span>';
+      return `
+        <div class="item${selectedId === id ? ' active' : ''}" data-id="${escapeHtml(id)}">
+          ${thumb}
+          <div class="info">
+            <div class="name">${escapeHtml(row.nurse_name || '—')}</div>
+            <div class="meta">${escapeHtml(row.employee_id || '')} · ${escapeHtml(row.care_centre || '')}</div>
+            <div class="patient">👤 ${escapeHtml(row.patient_name || 'No patient')}</div>
+            ${badge}
+            <div class="meta" style="margin-top:4px;">In ${escapeHtml(fmtTime(row.sign_in_at))}${row.sign_out_at ? ' · Out ' + escapeHtml(fmtTime(row.sign_out_at)) : ''}</div>
+          </div>
+        </div>`;
+    }).join('');
 
-  document.getElementById('searchBox').addEventListener('input', applyFilters);
-  document.getElementById('searchClear').addEventListener('click', () => {
-    const box = document.getElementById('searchBox');
-    box.value = '';
-    box.focus();
-    applyFilters();
+    /* Attach click handlers */
+    listEl.querySelectorAll('.item').forEach(el => {
+      el.addEventListener('click', (e) => {
+        if (e.target.classList.contains('thumb') && e.target.dataset.photo) {
+          openLightbox(e.target.dataset.photo); return;
+        }
+        const id = el.dataset.id;
+        const row = filteredRows.find(r => (r.submission_id || r.employee_id) === id);
+        if (row) selectRow(row, null);
+      });
+    });
+  }
+
+  /* ============================================================
+     Selection & detail
+     ============================================================ */
+  function selectRow(row, marker){
+    selectedId = row.submission_id || row.employee_id;
+
+    /* Highlight list */
+    listEl.querySelectorAll('.item').forEach(el => {
+      el.classList.toggle('active', el.dataset.id === selectedId);
+    });
+
+    /* Pan map to marker */
+    if (mapReady && row.latitude != null && row.longitude != null) {
+      const lat = Number(row.latitude), lng = Number(row.longitude);
+      if (L) {
+        map.setView([lat, lng], Math.max(map.getZoom(), 14), { animate: true });
+      } else if (window.google && map) {
+        map.panTo({ lat, lng });
+        map.setZoom(Math.max(map.getZoom(), 14));
+      }
+    }
+
+    /* Highlight marker */
+    markers.forEach(m => {
+      const isMatch = (m._row && (m._row.submission_id || m._row.employee_id) === selectedId);
+      if (L && m.getElement) {
+        const pin = m.getElement().querySelector('.map-pin');
+        if (pin) pin.classList.toggle('selected', isMatch);
+      }
+    });
+
+    showDetail(row);
+  }
+
+  function showDetail(row){
+    const hasPhoto = !!row.photo_base64;
+    const photoHtml = hasPhoto
+      ? `<img src="${row.photo_base64}" alt="Verification photo" data-photo="${escapeHtml(row.photo_base64)}" style="cursor:zoom-in">`
+      : `<div style="width:84px;height:84px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1B4C37,#2F7A5C);color:#fff;font-weight:700;font-size:24px;">${escapeHtml(initials(row.nurse_name))}</div>`;
+
+    const durationMs = row.sign_in_at && row.sign_out_at
+      ? new Date(row.sign_out_at).getTime() - new Date(row.sign_in_at).getTime()
+      : null;
+
+    const mapLink = (row.latitude != null && row.longitude != null)
+      ? `<a href="https://maps.google.com/?q=${Number(row.latitude)},${Number(row.longitude)}" target="_blank" rel="noopener">Open in Maps ↗</a>`
+      : '—';
+
+    detailContent.innerHTML = `
+      <div class="d-head">
+        ${photoHtml}
+        <div>
+          <h2>${escapeHtml(row.nurse_name || '—')}</h2>
+          <div class="d-sub">${escapeHtml(row.employee_id || '')} · ${escapeHtml(row.care_centre || '')}</div>
+          <div class="d-sub">${escapeHtml(row.emp_type || '')}</div>
+        </div>
+      </div>
+      <div class="d-body">
+        <div class="d-row"><span class="k">Patient</span><span class="v">${escapeHtml(row.patient_name || '—')}</span></div>
+        <div class="d-row"><span class="k">Signed in</span><span class="v">${escapeHtml(fmtDateTime(row.sign_in_at))}</span></div>
+        <div class="d-row"><span class="k">Signed out</span><span class="v">${escapeHtml(row.sign_out_at ? fmtDateTime(row.sign_out_at) : 'Still open')}</span></div>
+        <div class="d-row"><span class="k">Duration</span><span class="v">${durationMs != null ? fmtDuration(durationMs) : '—'}</span></div>
+        <div class="d-row"><span class="k">Sign-in location</span><span class="v">${escapeHtml(row.location_text || '—')}</span></div>
+        <div class="d-row"><span class="k">GPS</span><span class="v">${row.latitude != null ? Number(row.latitude).toFixed(5) + ', ' + Number(row.longitude).toFixed(5) : '—'}<br>${mapLink}</span></div>
+        <div class="d-row"><span class="k">Accuracy</span><span class="v">${row.accuracy_meters != null ? escapeHtml(row.accuracy_meters) + ' m' : '—'}</span></div>
+        <div class="d-row"><span class="k">Remarks</span><span class="v">${escapeHtml(row.remarks || '—')}</span></div>
+      </div>`;
+
+    /* Bind photo zoom */
+    const img = detailContent.querySelector('img[data-photo]');
+    if (img) img.addEventListener('click', () => openLightbox(img.dataset.photo));
+
+    detailPanel.classList.add('open');
+    detailBackdrop.classList.add('show');
+  }
+
+  function closeDetailPanel(){
+    detailPanel.classList.remove('open');
+    detailBackdrop.classList.remove('show');
+    selectedId = null;
+    listEl.querySelectorAll('.item.active').forEach(el => el.classList.remove('active'));
+    markers.forEach(m => {
+      if (L && m.getElement) {
+        const pin = m.getElement().querySelector('.map-pin');
+        if (pin) pin.classList.remove('selected');
+      }
+    });
+  }
+
+  closeDetail.addEventListener('click', closeDetailPanel);
+  detailBackdrop.addEventListener('click', closeDetailPanel);
+
+  /* ============================================================
+     Lightbox
+     ============================================================ */
+  function openLightbox(src){
+    lightboxImg.src = src;
+    lightbox.classList.add('open');
+  }
+  closeLightbox.addEventListener('click', () => lightbox.classList.remove('open'));
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) lightbox.classList.remove('open');
   });
-  document.getElementById('statusFilter').addEventListener('change', applyFilters);
 
-  ['centreFilter','empTypeFilter'].forEach(id => {
-    document.getElementById(id).addEventListener('change', loadData);
-  });
+  /* ============================================================
+     Load data
+     ============================================================ */
+  async function loadData(){
+    const dateStr = dateFilter.value || localDateStr(new Date());
+    listEl.innerHTML = '<div class="state-msg"><div class="spinner"></div>Loading attendance…</div>';
+    punchCountEl.textContent = '—';
+    refreshBtn.disabled = true;
 
-  // Default date range: last 30 days
-  const dEnd   = new Date();
-  const dStart = new Date(Date.now() - 30 * 24 * 3600 * 1000);
-  const fmt = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  document.getElementById('startDate').value = fmt(dStart);
-  document.getElementById('endDate').value   = fmt(dEnd);
+    try {
+      const rows = await fetchAttendance(dateStr);
+      allRows = Array.isArray(rows) ? rows : [];
+      filteredRows = allRows;
+      renderList();
+      plotAll();
+    } catch (err) {
+      console.error(err);
+      listEl.innerHTML = `<div class="errmsg"><b>Could not load attendance.</b><br>${escapeHtml(err.message || 'Unknown error')}<br><br>Check that the <code>${escapeHtml(TABLE)}</code> table exists and that Row Level Security allows anonymous SELECT, or that your policy permits reading.</div>`;
+      punchCountEl.textContent = '0';
+    } finally {
+      refreshBtn.disabled = false;
+    }
+  }
 
-  loadData();
+  refreshBtn.addEventListener('click', loadData);
+  dateFilter.addEventListener('change', loadData);
+
+  /* ============================================================
+     Init
+     ============================================================ */
+  (async function init(){
+    await initMap();
+    await loadData();
+  })();
 </script>
 </body>
 </html>
