@@ -21,7 +21,6 @@
     display:flex; flex-direction:column; min-height:100vh;
   }
 
-  /* ── Toolbar ─────────────────────────── */
   .toolbar{
     background:linear-gradient(135deg,var(--pulse-deep),var(--pulse));
     color:#fff; padding:12px 20px; display:flex; align-items:center;
@@ -62,7 +61,6 @@
   .toolbar button:active{ transform:scale(0.97); }
   .toolbar button:disabled{ opacity:0.5; cursor:not-allowed; }
 
-  /* ── Layout ──────────────────────────── */
   .main{ flex:1; display:flex; min-height:0; }
   #map{ flex:1; min-height:400px; background:#dde5e2; }
   .sidebar{
@@ -116,9 +114,7 @@
     font-size:12px; color:var(--ink-soft); margin-top:3px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .item .times{
-    margin-top:6px; display:flex; gap:5px; flex-wrap:wrap; align-items:center;
-  }
+  .item .times{ margin-top:6px; display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
   .pill{
     display:inline-flex; align-items:center; gap:4px;
     font-size:10.5px; font-weight:700; padding:2px 8px;
@@ -130,8 +126,8 @@
   .pill.dur{ background:#FDF3E0; color:#8A5A1F; }
   .pill.miss{ background:var(--danger-soft); color:var(--danger); }
   .pill.type{ background:#F0F1F4; color:#4A5568; text-transform:uppercase; }
+  .pill.date{ background:#EDE9F7; color:#4B3B7A; }
 
-  /* ── Detail panel ────────────────────── */
   .detail{
     position:fixed; bottom:0; left:0; right:0; z-index:900;
     background:#fff; border-radius:20px 20px 0 0;
@@ -140,10 +136,7 @@
     max-height:82vh; overflow-y:auto; max-width:620px; margin:0 auto;
   }
   .detail.open{ transform:translateY(0); }
-  .detail .drag-bar{
-    width:44px; height:4px; border-radius:2px; background:var(--line);
-    margin:10px auto 0;
-  }
+  .detail .drag-bar{ width:44px; height:4px; border-radius:2px; background:var(--line); margin:10px auto 0; }
   .detail .d-head{ display:flex; gap:16px; padding:16px 20px 8px; align-items:center; }
   .detail .d-head img{
     width:84px; height:84px; border-radius:12px; object-fit:cover;
@@ -156,10 +149,7 @@
     color:#fff; font-weight:700; font-size:26px; flex-shrink:0;
   }
   .detail .d-head h2{ margin:0; font-size:18px; font-weight:700; line-height:1.25; }
-  .detail .d-head .d-sub{
-    font-size:12.5px; color:var(--muted); margin-top:4px;
-    font-family:var(--font-mono);
-  }
+  .detail .d-head .d-sub{ font-size:12.5px; color:var(--muted); margin-top:4px; font-family:var(--font-mono); }
   .detail .d-head .type-badge{
     display:inline-block; margin-top:6px; font-size:10.5px;
     font-weight:700; padding:2px 9px; border-radius:20px;
@@ -184,7 +174,6 @@
   }
   .detail-backdrop.show{ opacity:1; pointer-events:auto; }
 
-  /* ── States ──────────────────────────── */
   .state-msg{ padding:40px 24px; text-align:center; color:var(--muted); font-size:14px; }
   .state-msg b{ color:var(--ink); display:block; font-size:15px; margin-bottom:6px; }
   .spinner{
@@ -197,8 +186,8 @@
     background:var(--danger-soft); border:1px solid #E3B4AB;
     border-radius:9px; margin:12px; line-height:1.55;
   }
+  .errmsg code{ background:rgba(0,0,0,0.06); padding:1px 5px; border-radius:4px; font-size:12px; }
 
-  /* ── Map markers ─────────────────────── */
   .map-pin{
     width:46px; height:46px; border-radius:50%; overflow:hidden;
     border:3px solid #fff; box-shadow:0 3px 10px rgba(20,28,43,0.4);
@@ -217,7 +206,6 @@
     box-shadow:0 0 0 4px rgba(47,122,92,0.3),0 3px 10px rgba(20,28,43,0.4);
   }
 
-  /* ── Lightbox ────────────────────────── */
   .lightbox{
     position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.9);
     display:none; align-items:center; justify-content:center; padding:20px;
@@ -260,8 +248,12 @@
 
   <div class="filters">
     <label>
-      Date
-      <input type="date" id="dateFilter">
+      From
+      <input type="date" id="dateFrom">
+    </label>
+    <label>
+      To
+      <input type="date" id="dateTo">
     </label>
     <label>
       Staff Type
@@ -321,17 +313,12 @@
   const SUPABASE_URL      = 'https://pdgxpgvwgnptxdvffgos.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkZ3hwZ3Z3Z25wdHhkdmZmZ29zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwODE4NzQsImV4cCI6MjEwODY1Nzg3NH0.MT7IQIbwfLumBoUQ3PaXipoJti14z10rz8NBzqMMASo';
 
+  /* The attendance table name. If your table is named differently, change this. */
   const TABLE = 'attendance';
 
-  /* ── Logo from GitHub raw URL ──────────────────────────────
-     Replace the URL below with your own repo path, e.g.:
-     https://raw.githubusercontent.com/<user>/<repo>/main/logo.png
-     For private repos, use a token or jsDelivr CDN:
-     https://cdn.jsdelivr.net/gh/<user>/<repo>@main/logo.png
-     ---------------------------------------------------------- */
+  /* Logo URL */
   const LOGO_URL = 'https://raw.githubusercontent.com/YOUR_GITHUB_USER/YOUR_REPO/main/logo.png';
 
-  /* Google Maps API key (optional — falls back to Leaflet/OSM if empty) */
   const GOOGLE_MAPS_API_KEY = '';
   const USE_LEAFLET = true;
 
@@ -340,37 +327,39 @@
      ============================================================ */
   let map = null;
   let markers = [];
-  let allRows = [];        // raw rows for the chosen date
-  let filteredRows = [];   // after type/status/id filters
+  let allRows = [];
+  let filteredRows = [];
   let mapReady = false;
   let selectedId = null;
   let L = null;
 
-  const dateFilter       = document.getElementById('dateFilter');
-  const staffTypeFilter  = document.getElementById('staffTypeFilter');
-  const statusFilter     = document.getElementById('statusFilter');
-  const empIdSearch      = document.getElementById('empIdSearch');
-  const refreshBtn       = document.getElementById('refreshBtn');
-  const listEl           = document.getElementById('list');
-  const punchCountEl     = document.getElementById('punchCount');
-  const detailPanel      = document.getElementById('detailPanel');
-  const detailContent    = document.getElementById('detailContent');
-  const detailBackdrop   = document.getElementById('detailBackdrop');
-  const closeDetail      = document.getElementById('closeDetail');
-  const lightbox         = document.getElementById('lightbox');
-  const lightboxImg      = document.getElementById('lightboxImg');
-  const closeLightbox    = document.getElementById('closeLightbox');
-  const brandLogo        = document.getElementById('brandLogo');
+  const dateFrom        = document.getElementById('dateFrom');
+  const dateTo          = document.getElementById('dateTo');
+  const staffTypeFilter = document.getElementById('staffTypeFilter');
+  const statusFilter    = document.getElementById('statusFilter');
+  const empIdSearch     = document.getElementById('empIdSearch');
+  const refreshBtn      = document.getElementById('refreshBtn');
+  const listEl          = document.getElementById('list');
+  const punchCountEl    = document.getElementById('punchCount');
+  const detailPanel     = document.getElementById('detailPanel');
+  const detailContent   = document.getElementById('detailContent');
+  const detailBackdrop  = document.getElementById('detailBackdrop');
+  const closeDetail     = document.getElementById('closeDetail');
+  const lightbox        = document.getElementById('lightbox');
+  const lightboxImg     = document.getElementById('lightboxImg');
+  const closeLightbox   = document.getElementById('closeLightbox');
+  const brandLogo       = document.getElementById('brandLogo');
 
-  /* Logo: set src and hide gracefully if it fails */
   brandLogo.src = LOGO_URL;
   brandLogo.onerror = () => { brandLogo.style.display = 'none'; };
 
-  /* Default date = today */
   function localDateStr(d){
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
-  dateFilter.value = localDateStr(new Date());
+  /* Default: today → today */
+  const todayStr = localDateStr(new Date());
+  dateFrom.value = todayStr;
+  dateTo.value   = todayStr;
 
   /* ============================================================
      Helpers
@@ -393,6 +382,12 @@
     return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }) +
       ' ' + d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
   }
+  function fmtDateShort(iso){
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short' });
+  }
   function fmtDuration(ms){
     if (!isFinite(ms) || ms < 0) return '—';
     const totalMin = Math.round(ms / 60000);
@@ -411,36 +406,74 @@
     const ms = new Date(row.sign_out_at).getTime() - new Date(row.sign_in_at).getTime();
     return isFinite(ms) && ms >= 0 ? ms : null;
   }
-  function statusOf(row){
-    return row.sign_out_at ? 'out' : 'in';
-  }
 
   /* ============================================================
-     Fetch from Supabase
+     Fetch — multiple filter columns, in this order of preference:
+       1) duty_date    (plain `date` column written by the app) — exact, timezone-free
+       2) sign_in_at   (timestamptz) — fallback, widened by ±1 day to be TZ-safe
+     Each fallback is attempted if the previous fails (column missing / no rows).
      ============================================================ */
-  async function fetchAttendance(dateStr){
-    const start = new Date(dateStr + 'T00:00:00');
-    const end   = new Date(dateStr + 'T23:59:59.999');
-    const url = SUPABASE_URL + '/rest/v1/' + TABLE +
-      '?select=*' +
-      '&sign_in_at=gte.' + encodeURIComponent(start.toISOString()) +
-      '&sign_in_at=lte.' + encodeURIComponent(end.toISOString()) +
-      '&order=sign_in_at.desc';
-
-    const res = await fetch(url, {
+  async function restGet(path){
+    const res = await fetch(SUPABASE_URL + path, {
       headers: {
         'apikey': SUPABASE_ANON_KEY,
         'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
         'Accept': 'application/json'
       }
     });
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
     if (!res.ok) {
-      const text = await res.text();
-      let msg = 'HTTP ' + res.status;
-      try { const j = JSON.parse(text); msg = j.message || j.hint || msg; } catch(e){}
-      throw new Error(msg);
+      const msg = (data && (data.message || data.hint || data.error)) || ('HTTP ' + res.status);
+      const err = new Error(msg);
+      err.status = res.status;
+      throw err;
     }
-    return await res.json();
+    return data;
+  }
+
+  async function fetchAttendance(fromStr, toStr){
+    /* ── Attempt 1: duty_date range (exact, no timezone drift) ── */
+    try {
+      const path1 = '/rest/v1/' + TABLE +
+        '?select=*' +
+        '&duty_date=gte.' + encodeURIComponent(fromStr) +
+        '&duty_date=lte.' + encodeURIComponent(toStr) +
+        '&order=duty_date.desc,duty_time.desc';
+      const rows = await restGet(path1);
+      if (Array.isArray(rows) && rows.length) {
+        console.info('[attendance] loaded via duty_date:', rows.length);
+        return rows;
+      }
+      // No rows — but column exists. Still check sign_in_at in case duty_date is null on older rows.
+    } catch (e) {
+      if (e.status !== 400 && e.status !== 404) throw e; // 400 = unknown column → try next
+      console.warn('[attendance] duty_date not usable:', e.message);
+    }
+
+    /* ── Attempt 2: sign_in_at timestamptz range, widened ±1 day ── */
+    const from = new Date(fromStr + 'T00:00:00');
+    const to   = new Date(toStr   + 'T23:59:59.999');
+    from.setDate(from.getDate() - 1);   // widen for UTC offset
+    to.setDate(to.getDate()   + 1);
+
+    const path2 = '/rest/v1/' + TABLE +
+      '?select=*' +
+      '&sign_in_at=gte.' + encodeURIComponent(from.toISOString()) +
+      '&sign_in_at=lte.' + encodeURIComponent(to.toISOString()) +
+      '&order=sign_in_at.desc';
+    const rows = await restGet(path2);
+    console.info('[attendance] loaded via sign_in_at:', rows.length);
+
+    /* Re-filter by local date (the widest window may include a day on either side) */
+    return rows.filter(r => {
+      if (!r.sign_in_at) return true;
+      const d = new Date(r.sign_in_at);
+      if (isNaN(d.getTime())) return true;
+      const local = localDateStr(d);
+      return local >= fromStr && local <= toStr;
+    });
   }
 
   /* ============================================================
@@ -453,10 +486,8 @@
 
     filteredRows = allRows.filter(r => {
       if (type && String(r.emp_type || '').toLowerCase() !== type.toLowerCase()) return false;
-
       if (status === 'in'  && r.sign_out_at) return false;
       if (status === 'out' && !r.sign_out_at) return false;
-
       if (idQ) {
         const hay = (String(r.employee_id || '') + ' ' + String(r.nurse_name || '')).toLowerCase();
         if (!hay.includes(idQ)) return false;
@@ -537,7 +568,6 @@
       r.latitude != null && r.longitude != null &&
       isFinite(Number(r.latitude)) && isFinite(Number(r.longitude))
     );
-
     if (!withCoords.length) return;
 
     withCoords.forEach(row => addMarker(row));
@@ -599,7 +629,7 @@
      ============================================================ */
   function renderList(){
     if (!filteredRows.length) {
-      listEl.innerHTML = '<div class="state-msg"><b>No matching attendance</b>Try a different date, filter, or clear the search.</div>';
+      listEl.innerHTML = '<div class="state-msg"><b>No matching attendance</b>Try a wider date range, different filters, or clear the search.</div>';
       punchCountEl.textContent = '0';
       return;
     }
@@ -612,9 +642,14 @@
         ? `<img class="thumb" src="${row.photo_base64}" alt="" data-photo="${escapeHtml(row.photo_base64)}">`
         : `<div class="thumb no-photo">${escapeHtml(initials(row.nurse_name))}</div>`;
 
-      const durMs = durationOf(row);
+      const durMs  = durationOf(row);
       const durStr = durMs != null ? fmtDuration(durMs) : null;
-      const st = statusOf(row);
+
+      /* Show duty date when the range spans more than one day */
+      const multiDay = dateFrom.value && dateTo.value && dateFrom.value !== dateTo.value;
+      const datePill = multiDay
+        ? `<span class="pill date">${escapeHtml(fmtDateShort(row.sign_in_at || row.duty_date))}</span>`
+        : '';
 
       const timesHtml =
         `<span class="pill in">IN ${escapeHtml(fmtTime(row.sign_in_at))}</span>` +
@@ -624,8 +659,7 @@
           : `<span class="pill miss">Missing sign-out</span>`);
 
       const typeBadge = row.emp_type
-        ? `<span class="pill type">${escapeHtml(row.emp_type)}</span>`
-        : '';
+        ? `<span class="pill type">${escapeHtml(row.emp_type)}</span>` : '';
 
       return `
         <div class="item${selectedId === id ? ' active' : ''}" data-id="${escapeHtml(id)}">
@@ -634,7 +668,7 @@
             <div class="name">${escapeHtml(row.nurse_name || '—')}</div>
             <div class="meta">${escapeHtml(row.employee_id || '')}${row.care_centre ? ' · ' + escapeHtml(row.care_centre) : ''}</div>
             <div class="patient">👤 ${escapeHtml(row.patient_name || 'No patient')}</div>
-            <div class="times">${timesHtml}${typeBadge}</div>
+            <div class="times">${datePill}${timesHtml}${typeBadge}</div>
           </div>
         </div>`;
     }).join('');
@@ -685,15 +719,14 @@
       ? `<img src="${row.photo_base64}" alt="Verification photo" data-photo="${escapeHtml(row.photo_base64)}">`
       : `<div class="avatar">${escapeHtml(initials(row.nurse_name))}</div>`;
 
-    const durMs = durationOf(row);
+    const durMs  = durationOf(row);
     const durStr = durMs != null ? fmtDuration(durMs) : '—';
     const mapLink = (row.latitude != null && row.longitude != null)
       ? `<a href="https://maps.google.com/?q=${Number(row.latitude)},${Number(row.longitude)}" target="_blank" rel="noopener">Open in Maps ↗</a>`
       : '—';
 
     const typeBadge = row.emp_type
-      ? `<span class="type-badge">${escapeHtml(row.emp_type)}</span>`
-      : '';
+      ? `<span class="type-badge">${escapeHtml(row.emp_type)}</span>` : '';
 
     detailContent.innerHTML = `
       <div class="d-head">
@@ -748,18 +781,35 @@
      Load
      ============================================================ */
   async function loadData(){
-    const dateStr = dateFilter.value || localDateStr(new Date());
+    let fromStr = dateFrom.value;
+    let toStr   = dateTo.value;
+
+    if (!fromStr && !toStr) {
+      fromStr = todayStr; toStr = todayStr;
+      dateFrom.value = fromStr; dateTo.value = toStr;
+    }
+    if (!fromStr) fromStr = toStr;
+    if (!toStr)   toStr   = fromStr;
+    if (fromStr > toStr) { const t = fromStr; fromStr = toStr; toStr = t; dateFrom.value = fromStr; dateTo.value = toStr; }
+
     listEl.innerHTML = '<div class="state-msg"><div class="spinner"></div>Loading attendance…</div>';
     punchCountEl.textContent = '—';
     refreshBtn.disabled = true;
 
     try {
-      const rows = await fetchAttendance(dateStr);
+      const rows = await fetchAttendance(fromStr, toStr);
       allRows = Array.isArray(rows) ? rows : [];
       applyFilters();
     } catch (err) {
-      console.error(err);
-      listEl.innerHTML = `<div class="errmsg"><b>Could not load attendance.</b><br>${escapeHtml(err.message || 'Unknown error')}<br><br>Check that the <code>${escapeHtml(TABLE)}</code> table exists and that Row Level Security allows anonymous SELECT.</div>`;
+      console.error('[attendance] load failed:', err);
+      listEl.innerHTML = `<div class="errmsg">
+        <b>Could not load attendance.</b><br>
+        ${escapeHtml(err.message || 'Unknown error')}<br><br>
+        Check that:<br>
+        · the table <code>${escapeHtml(TABLE)}</code> exists in Supabase<br>
+        · Row Level Security allows <code>SELECT</code> for the <code>anon</code> role<br>
+        · the columns <code>duty_date</code> or <code>sign_in_at</code> exist
+      </div>`;
       punchCountEl.textContent = '0';
     } finally {
       refreshBtn.disabled = false;
@@ -767,11 +817,11 @@
   }
 
   refreshBtn.addEventListener('click', loadData);
-  dateFilter.addEventListener('change', loadData);
+  dateFrom.addEventListener('change', loadData);
+  dateTo.addEventListener('change', loadData);
   staffTypeFilter.addEventListener('change', applyFilters);
   statusFilter.addEventListener('change', applyFilters);
 
-  /* Debounced emp ID search */
   let searchTimer = null;
   empIdSearch.addEventListener('input', () => {
     clearTimeout(searchTimer);
