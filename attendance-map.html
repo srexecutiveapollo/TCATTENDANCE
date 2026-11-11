@@ -36,7 +36,6 @@
   .topbar button:hover{ background:var(--pulse); }
   .count-badge{ font-size:12px; color:var(--muted); align-self:flex-end; padding-bottom:8px; white-space:nowrap; }
 
-  /* Search field with clear button */
   .search-group{ position:relative; min-width:180px; }
   .search-group input{ padding-right:28px; width:100%; }
   .search-clear{
@@ -76,7 +75,6 @@
     display:flex; align-items:center; justify-content:center; overflow:hidden;
     position:relative;
   }
-  /* Signed-in (still on duty) = filled green + pulsing dot */
   .pin-avatar.on-duty{ border-color:#2F7A5C; }
   .pin-avatar.on-duty::after{
     content:''; position:absolute; top:-3px; right:-3px;
@@ -90,7 +88,6 @@
     70%{ box-shadow:0 0 0 8px rgba(232,184,75,0); }
     100%{ box-shadow:0 0 0 0 rgba(232,184,75,0); }
   }
-  /* Signed-out = grey ring */
   .pin-avatar.signed-out{ border-color:#8A94A6; opacity:0.85; }
 
   .pin-avatar-img{ width:100%; height:100%; object-fit:cover; display:block; }
@@ -124,7 +121,6 @@
     <h1>📍 Attendance Map</h1>
   </div>
 
-  <!-- NEW: Employee ID / Name search -->
   <div class="field-group search-group">
     <label for="searchBox">Search Emp ID / Name</label>
     <input type="text" id="searchBox" placeholder="e.g. AHC1234 or Vishnu" autocomplete="off">
@@ -165,16 +161,6 @@
     </select>
   </div>
   <div class="field-group">
-    <label for="dutyTypeFilter">Duty Type</label>
-    <select id="dutyTypeFilter">
-      <option value="">All Duty Types</option>
-      <option value="12 Hrs Day">12 Hrs Day</option>
-      <option value="12 Hrs Night">12 Hrs Night</option>
-      <option value="24 Hrs stay duty">24 Hrs stay duty</option>
-      <option value="On Call">On Call</option>
-    </select>
-  </div>
-  <div class="field-group">
     <label for="statusFilter">Status</label>
     <select id="statusFilter">
       <option value="">All</option>
@@ -194,7 +180,6 @@
   <div class="legend">
     <div><span class="dot fill"></span> Signed in (on duty)</div>
     <div><span class="dot ring"></span> Signed out</div>
-    <div style="margin-top:6px;font-size:11px;color:var(--muted);">Dot colour inside pin = duty type</div>
   </div>
 </div>
 
@@ -212,8 +197,8 @@
     maxZoom: 19
   }).addTo(map);
 
-  let allRecords = [];   // every row fetched from Supabase
-  let markers    = [];   // currently drawn markers
+  let allRecords = [];
+  let markers    = [];
 
   // ── Utilities ────────────────────────────────────────────
   function getInitials(name){
@@ -226,26 +211,25 @@
   function escapeHtml(str){
     return String(str || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
-  function dutyColor(dutyType){
-    if (dutyType === '12 Hrs Night')     return '#1F6FB2';
-    if (dutyType === '24 Hrs stay duty') return '#D98E1F';
-    if (dutyType === 'On Call')          return '#8A4FB8';
-    return '#2F7A5C'; // 12 Hrs Day
-  }
   function isSignedOut(r){
     return !!(r.sign_out_at && String(r.sign_out_at).trim());
+  }
+  function formatDateTime(iso){
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) +
+      ' ' + d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
   }
 
   // ── Marker icon ──────────────────────────────────────────
   function buildMarkerIcon(r){
-    const color    = dutyColor(r.duty_type);
     const signedOut = isSignedOut(r);
     const avatarInner = r.photo_base64
       ? '<img src="' + escapeHtml(r.photo_base64) + '" class="pin-avatar-img">'
       : '<span class="pin-avatar-initials">' + escapeHtml(getInitials(r.nurse_name)) + '</span>';
 
     const avatarClass = signedOut ? 'pin-avatar signed-out' : 'pin-avatar on-duty';
-    const labelColor  = signedOut ? '#8A94A6' : color;
+    const labelColor  = signedOut ? '#8A94A6' : '#2F7A5C';
 
     const html =
       '<div class="pin-wrap">' +
@@ -279,7 +263,6 @@
       ? '<img src="' + escapeHtml(r.photo_base64) + '" alt="Check-in photo" class="popup-photo">'
       : '';
 
-    // Sign-in vs sign-out location
     const signInLine =
       'In: ' + escapeHtml(r.duty_date || '—') + ' ' + escapeHtml(r.duty_time || '') +
       (r.location_text ? '<br>&nbsp;&nbsp;&nbsp;@ ' + escapeHtml(r.location_text) : '');
@@ -297,18 +280,10 @@
       '<b>' + escapeHtml(r.nurse_name) + '</b> (' + escapeHtml(r.employee_id || '') + ')' +
       statusBadge + punctBadge + '<br>' +
       escapeHtml(r.care_centre) + ' · ' + escapeHtml(r.emp_type || '—') + '<br>' +
-      'Shift: ' + escapeHtml(r.duty_type || '—') + '<br>' +
       'Patient: ' + escapeHtml(r.patient_name || 'N/A') + '<br>' +
       signInLine + signOutLine +
       photoHtml
     );
-  }
-
-  function formatDateTime(iso){
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    return d.toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'}) +
-      ' ' + d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
   }
 
   // ── Draw filtered records ────────────────────────────────
@@ -325,11 +300,8 @@
       typeof r.latitude === 'number' && typeof r.longitude === 'number'
     );
 
-    if (valid.length === 0) {
-      noResultsEl.classList.add('visible');
-    } else {
-      noResultsEl.classList.remove('visible');
-    }
+    if (valid.length === 0) noResultsEl.classList.add('visible');
+    else                    noResultsEl.classList.remove('visible');
 
     const centreSet = new Set();
     let inCount = 0, outCount = 0;
@@ -344,11 +316,10 @@
     });
 
     if (valid.length > 0) {
-      const bounds = L.latLngBounds(valid.map(r => [r.latitude, r.longitude]));
-      // If only one point, zoom to it manually rather than fit a 0-size bounds
       if (valid.length === 1) {
         map.setView([valid[0].latitude, valid[0].longitude], 14);
       } else {
+        const bounds = L.latLngBounds(valid.map(r => [r.latitude, r.longitude]));
         map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
       }
     } else {
@@ -360,13 +331,12 @@
       centreSet.size + ' centre' + (centreSet.size === 1 ? '' : 's');
   }
 
-  // ── Client-side filter (search + status) ────────────────
+  // ── Client-side filter ──────────────────────────────────
   function applyFilters(){
     const q      = document.getElementById('searchBox').value.trim().toLowerCase();
     const status = document.getElementById('statusFilter').value;
 
-    const clearBtn = document.getElementById('searchClear');
-    clearBtn.classList.toggle('visible', q.length > 0);
+    document.getElementById('searchClear').classList.toggle('visible', q.length > 0);
 
     let filtered = allRecords;
 
@@ -388,15 +358,15 @@
     const end      = document.getElementById('endDate').value;
     const centre   = document.getElementById('centreFilter').value;
     const empType  = document.getElementById('empTypeFilter').value;
-    const dutyType = document.getElementById('dutyTypeFilter').value;
 
     const loadingNote = document.getElementById('loadingNote');
     loadingNote.style.display = 'block';
     loadingNote.textContent = 'Loading attendance…';
 
+    // NOTE: duty_type is NOT selected — that column doesn't exist on the table.
     let url = SUPABASE_URL + '/rest/v1/attendance'
             + '?select=submission_id,nurse_name,employee_id,emp_type,care_centre,'
-            + 'duty_date,duty_time,duty_type,patient_name,location_text,'
+            + 'duty_date,duty_time,patient_name,location_text,'
             + 'latitude,longitude,punctuality,submitted_at,photo_base64,'
             + 'sign_out_at,sign_out_location,sign_out_latitude,sign_out_longitude'
             + '&order=submitted_at.desc';
@@ -407,7 +377,6 @@
     }
     if (centre)   url += '&care_centre=eq.' + encodeURIComponent(centre);
     if (empType)  url += '&emp_type=eq.'    + encodeURIComponent(empType);
-    if (dutyType) url += '&duty_type=eq.'   + encodeURIComponent(dutyType);
 
     try {
       const res = await fetch(url, {
@@ -444,8 +413,7 @@
   });
   document.getElementById('statusFilter').addEventListener('change', applyFilters);
 
-  // Also live-filter on the other dropdowns after first load — no extra network call
-  ['centreFilter','empTypeFilter','dutyTypeFilter'].forEach(id => {
+  ['centreFilter','empTypeFilter'].forEach(id => {
     document.getElementById(id).addEventListener('change', loadData);
   });
 
